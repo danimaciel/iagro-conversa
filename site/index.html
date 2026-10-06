@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iAgro Conversa</title>
+<meta name="description" content="Projeto experimental: converse com as publicações, soluções tecnológicas e projetos da Embrapa Territorial. A busca e a inteligência artificial rodam no seu navegador.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f4ec; --surface:#ffffff; --ink:#17251d; --muted:#5b6b61; --line:#e2e0d4;
+  --green-900:#0d3b2a; --green-700:#1f6b45; --green-500:#3f9a5c; --leaf:#a9cf6e;
+  --amber:#c8892a; --pub:#1f6b45; --tec:#c8892a; --prj:#2f6f9f; --balao:#e9f1e3;
+  --hero-ink:#f3f1e6; --shadow:0 1px 2px #0d3b2a14, 0 8px 24px #0d3b2a12;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1713; --surface:#16211b; --ink:#e7ece6; --muted:#9db0a3; --line:#26352c; --balao:#1d2d24;
+    --green-700:#5cb57d; --green-500:#7cc893; --leaf:#b9dc82; --pub:#5cb57d; --tec:#e0a648; --prj:#6aa6d6;
+    --shadow:0 1px 2px #0006, 0 8px 24px #0005;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1713; --surface:#16211b; --ink:#e7ece6; --muted:#9db0a3; --line:#26352c; --balao:#1d2d24;
+  --green-700:#5cb57d; --green-500:#7cc893; --leaf:#b9dc82; --pub:#5cb57d; --tec:#e0a648; --prj:#6aa6d6;
+  --shadow:0 1px 2px #0006, 0 8px 24px #0005;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Inter,system-ui,sans-serif}
+a{color:var(--green-700)}
+.wrap{max-width:900px;margin:0 auto;padding:0 16px}
+.hero{position:relative;overflow:hidden;color:var(--hero-ink);background:radial-gradient(120% 90% at 85% 0%, #2a7a4f 0%, #0d3b2a 55%, #082619 100%)}
+.hero svg.relevo{position:absolute;inset:0;width:100%;height:100%;opacity:.22;pointer-events:none}
+.hero .wrap{position:relative;padding-top:20px;padding-bottom:30px}
+.marca{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:.02em}
+.marca button{all:unset;display:flex;align-items:center;gap:10px;cursor:pointer;border-radius:8px}
+.marca button:focus-visible{outline:2px solid var(--leaf);outline-offset:4px}
+.marca .selo{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#ffffff18;border:1px solid #ffffff38}
+.marca small{font-weight:400;opacity:.75}
+.demo{margin-left:auto;font-size:12.5px;padding:4px 10px;border-radius:99px;background:#c8892a33;border:1px solid #e0a64866;color:#ffe2b0}
+h1{font:650 clamp(28px,4.6vw,44px)/1.1 Fraunces,Georgia,serif;margin:30px 0 10px;max-width:20ch}
+h1 em{font-style:normal;color:var(--leaf)}
+.sub{max-width:64ch;opacity:.9;margin:0}
+.painel{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:20px;padding:12px 14px;border-radius:14px;background:#0b2e21cc;border:1px solid #ffffff22;font-size:14px}
+.painel select{font:inherit;font-size:14px;border-radius:8px;border:1px solid #ffffff44;background:#ffffff14;color:var(--hero-ink);padding:6px 8px}
+.painel select option{color:#17251d}
+.painel button{font:600 14px Inter,sans-serif;border:0;border-radius:8px;background:var(--amber);color:#1b1206;padding:8px 14px;cursor:pointer}
+.painel button:disabled{opacity:.6;cursor:default}
+.painel .estado{flex-basis:100%;font-size:13px;opacity:.85;display:flex;gap:8px;align-items:center}
+.ponto{width:8px;height:8px;border-radius:50%;background:var(--amber);flex:none}
+.ok .ponto{background:var(--leaf)}
+main{padding:24px 0 140px}
+.vazio{color:var(--muted);text-align:center;padding:24px 0}
+.exemplos{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px}
+.exemplos button{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:99px;padding:7px 13px;cursor:pointer}
+.msg{margin:18px 0}
+.msg.eu{display:flex;justify-content:flex-end}
+.msg.eu div{background:var(--green-700);color:#fff;border-radius:16px 16px 4px 16px;padding:10px 14px;max-width:80%}
+.msg.ia .resp{background:var(--surface);border:1px solid var(--line);border-radius:16px 16px 16px 4px;padding:14px 16px;box-shadow:var(--shadow)}
+.msg.ia .resp p{margin:0 0 8px}
+.msg.ia .resp p:last-child{margin:0}
+.msg.ia .aviso{font-size:13px;color:var(--muted);margin-top:8px}
+.cit{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;border-radius:6px;background:var(--balao);color:var(--green-700);font-size:12px;font-weight:600;text-decoration:none;vertical-align:1px}
+.fontes{margin-top:10px;display:grid;gap:8px}
+.fontes summary{cursor:pointer;font-size:14px;color:var(--muted);margin:6px 0}
+.fonte{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--cor);border-radius:12px;padding:10px 14px;font-size:14px}
+.fonte.PUB{--cor:var(--pub)} .fonte.TEC{--cor:var(--tec)} .fonte.PRJ{--cor:var(--prj)}
+.fonte .topo{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;color:var(--muted);font-size:12.5px}
+.fonte .topo b{color:var(--green-700);font-size:13px}
+.fonte h4{font:600 15px/1.3 Fraunces,Georgia,serif;margin:4px 0}
+.fonte blockquote{margin:6px 0;padding-left:10px;border-left:2px solid var(--line);color:var(--ink);opacity:.9}
+.fonte .links{display:flex;flex-wrap:wrap;gap:12px;font-size:13px}
+.cursor::after{content:"▍";animation:pisca 1s infinite;color:var(--green-500)}
+@keyframes pisca{50%{opacity:0}}
+.entrada{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(transparent, var(--bg) 30%);padding:24px 0 14px}
+.entrada form{display:flex;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:6px;box-shadow:var(--shadow)}
+.entrada input{flex:1;min-width:0;border:0;outline:0;font:inherit;font-size:16px;padding:10px;background:transparent;color:var(--ink)}
+.entrada button{border:0;border-radius:10px;background:var(--green-700);color:#fff;font:600 15px Inter,sans-serif;padding:0 18px;cursor:pointer}
+.entrada small{display:block;text-align:center;color:var(--muted);font-size:12px;margin-top:6px}
+dialog{max-width:560px;border:0;border-radius:16px;padding:22px 24px;background:var(--surface);color:var(--ink);box-shadow:0 20px 60px #0008}
+dialog::backdrop{background:#0008}
+dialog h2{font:650 22px Fraunces,Georgia,serif;margin:0 0 10px}
+dialog p{margin:0 0 10px}
+dialog button{font:600 14px Inter,sans-serif;border:0;border-radius:8px;background:var(--green-700);color:#fff;padding:8px 16px;cursor:pointer}
+@media (max-width:640px){ .demo{display:none} .msg.eu div{max-width:92%} }
+</style>
+</head>
+<body>
+<header class="hero">
+  <svg class="relevo" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true" id="relevo"></svg>
+  <div class="wrap">
+    <div class="marca">
+      <button type="button" id="sobreBtn" aria-haspopup="dialog" title="Sobre o iAgro">
+        <span class="selo" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e9f3d6" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></svg></span>
+        iAgro <small>Conversa · Embrapa Territorial</small>
+      </button>
+      <span class="demo">Experimental · dados públicos</span>
+    </div>
+    <h1>Converse com o que a Embrapa Territorial <em>produziu e produz.</em></h1>
+    <p class="sub" id="sub">Pergunte do seu jeito. A busca encontra os trechos mais relevantes das publicações, soluções e projetos, e uma inteligência artificial que roda no seu navegador escreve a resposta citando as fontes.</p>
+    <div class="painel" id="painel">
+      <label for="modelo">IA para escrever a resposta:</label>
+      <select id="modelo">
+        <option value="Qwen2.5-1.5B-Instruct">Leve · Qwen 2.5 1,5B (cerca de 1 GB)</option>
+        <option value="Qwen2.5-3B-Instruct" selected>Equilibrada · Qwen 2.5 3B (cerca de 2 GB)</option>
+        <option value="gemma-2-2b-it">Gemma 2 2B (cerca de 1,5 GB)</option>
+        <option value="Qwen2.5-7B-Instruct">Mais completa · Qwen 2.5 7B (cerca de 4,5 GB; precisa de placa de vídeo boa)</option>
+      </select>
+      <button id="ativar" type="button">Ativar IA</button>
+      <div class="estado" id="estadoIA"><span class="ponto"></span><span id="estadoIATxt">A IA é opcional e baixada só uma vez, para o seu navegador. Sem ela, você vê os trechos encontrados.</span></div>
+      <div class="estado" id="estadoBusca"><span class="ponto"></span><span id="estadoBuscaTxt">Carregando a base…</span></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="conversa" aria-live="polite">
+    <div class="vazio" id="inicio">
+      <p>Experimente perguntar:</p>
+      <div class="exemplos" id="exemplos"></div>
+    </div>
+  </div>
+</main>
+
+<div class="entrada">
+  <div class="wrap">
+    <form id="form"><input id="q" autocomplete="off" placeholder="Escreva sua pergunta…" aria-label="Sua pergunta"><button>Enviar</button></form>
+    <small>Projeto experimental. Respostas de IA podem conter erros: confira sempre as fontes.</small>
+  </div>
+</div>
+
+<dialog id="sobre" aria-labelledby="sobreTitulo">
+  <h2 id="sobreTitulo">Sobre o iAgro</h2>
+  <p>O iAgro é um projeto experimental, feito com dados públicos da Embrapa, que busca apoiar o desenvolvimento da agricultura brasileira facilitando o acesso às tecnologias e aos conhecimentos produzidos pela pesquisa agropecuária pública.</p>
+  <p>Não é um serviço oficial da Embrapa. Respostas geradas por inteligência artificial podem conter erros: confira sempre a publicação original.</p>
+  <p style="font-size:14px;color:var(--muted)" id="sobreDados"></p>
+  <p style="font-size:14px;color:var(--muted)">Também: <a href="https://danimaciel.github.io/iagro-embrapa/">busca em toda a Embrapa</a> · <a href="https://github.com/danimaciel/iagro-conversa">código aberto</a></p>
+  <form method="dialog"><button>Fechar</button></form>
+</dialog>
+
+<script type="module">
+const EXEMPLOS = [
+  "Existe aplicativo que avisa sobre a ferrugem da soja no oeste da Bahia?",
+  "Como identificar pastagens degradadas por satélite?",
+  "O que é o SITE Caatinga e para que serve?",
+  "Onde o percevejo do eucalipto pode causar mais problema?",
+];
+const MODELOS_MLC = {  // sufixo do modelo na WebLLM conforme a placa aceita float16
+  f16: "-q4f16_1-MLC", f32: "-q4f32_1-MLC",
+};
+const TIPOS = ["PUB", "TEC", "PRJ"], NOME_TIPO = {PUB: "Publicação", TEC: "Solução tecnológica", PRJ: "Projeto"};
+const N_FONTES = 5, CANDIDATOS = 200, MAX_POR_DOC = 2;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const fmt = n => n.toLocaleString("pt-BR");
+
+let INFO, DOCS, TR, BITS, N, extrator = null, motor = null, ocupado = false;
+const blocos = new Map(), historico = [];
+
+/* ---------- relevo do topo */
+(function () {
+  let d = "";
+  for (let k = 0; k < 14; k++) {
+    const y0 = 40 + k * 40, a = 18 + (k % 5) * 6;
+    d += `<path d="M -20 ${y0} ` + Array.from({length: 13}, (_, i) => { const x = i * 100, y = y0 + Math.sin(i * .9 + k * .55) * a + Math.cos(i * .37 + k) * a * .6; return `S ${x - 50} ${y} ${x} ${y}`; }).join(" ") + `" fill="none" stroke="#cfe8b0" stroke-width="${k % 4 ? .8 : 1.6}"/>`;
+  }
+  $("relevo").innerHTML = d;
+})();
+
+$("sobreBtn").addEventListener("click", () => $("sobre").showModal());
+function estado(qual, txt, ok) { $(qual + "Txt").textContent = txt; $(qual).className = "estado" + (ok ? " ok" : ""); }
+
+/* ---------- busca por significado nos trechos (bits -> candidatos -> vetor completo) */
+async function buscarTrechos(q) {
+  const v = (await extrator("query: " + q, {pooling: "mean", normalize: true})).data;
+  const D = INFO.dim, B = D / 8, qc = new Float32Array(D);
+  for (let j = 0; j < D; j++) qc[j] = v[j] - INFO.media[j];
+  const tab = new Float32Array(B * 256);
+  for (let j = 0; j < B; j++) for (let x = 0; x < 256; x++) { let s = 0; for (let k = 0; k < 8; k++) s += (x & (128 >> k)) ? qc[j * 8 + k] : -qc[j * 8 + k]; tab[j * 256 + x] = s; }
+  const s = new Float32Array(N);
+  for (let i = 0; i < N; i++) { let acc = 0; const o = i * B; for (let j = 0; j < B; j++) acc += tab[j * 256 + BITS[o + j]]; s[i] = acc; }
+  const cand = [...s.keys()].sort((a, b) => s[b] - s[a]).slice(0, CANDIDATOS);
+  // reordena com o vetor completo, lendo só as linhas dos candidatos
+  const L = INFO.linhas_vet, f = INFO.escala / 127, nota = new Map(), grupos = [];
+  for (const i of [...cand].sort((a, b) => a - b)) { const g = grupos.at(-1); if (g && Math.floor(i / L) === Math.floor(g.ini / L) && i - g.fim <= 8) g.fim = i; else grupos.push({ini: i, fim: i}); }
+  const quer = new Set(cand);
+  try {
+    await Promise.all(grupos.map(async g => {
+      const a = (g.ini % L) * D, z = (g.fim % L) * D + D - 1;
+      const r = await fetch(`dados/vet/${String(Math.floor(g.ini / L)).padStart(2, "0")}.bin`, {headers: {Range: `bytes=${a}-${z}`}});
+      let buf = new Int8Array(await r.arrayBuffer()); if (r.status === 200) buf = buf.subarray(a, z + 1);
+      for (let i = g.ini; i <= g.fim; i++) { if (!quer.has(i)) continue; let acc = 0; const o = (i - g.ini) * D; for (let j = 0; j < D; j++) acc += v[j] * buf[o + j]; nota.set(i, acc * f); }
+    }));
+    cand.sort((a, b) => nota.get(b) - nota.get(a));
+  } catch (e) { console.warn("reordenação indisponível", e); }
+  // no máximo 2 trechos por documento, para variar as fontes
+  const porDoc = new Map(), escolhidos = [];
+  for (const i of cand) { const d = TR.d[i], n = porDoc.get(d) || 0; if (n >= MAX_POR_DOC) continue; porDoc.set(d, n + 1); escolhidos.push(i); if (escolhidos.length === N_FONTES) break; }
+  return Promise.all(escolhidos.map(async i => ({i, doc: DOCS[TR.d[i]], pagina: TR.p[i], texto: await textoTrecho(i), nota: nota.get(i)})));
+}
+async function textoTrecho(i) {
+  const b = Math.floor(i / INFO.bloco);
+  if (!blocos.has(b)) blocos.set(b, fetch(`dados/tx/${String(b).padStart(4, "0")}.json`).then(r => r.json()));
+  return (await blocos.get(b))[i % INFO.bloco];
+}
+
+/* ---------- modelo de linguagem no navegador (WebLLM) */
+const REGRAS = `Você é o iAgro, assistente que responde dúvidas usando somente os TRECHOS fornecidos, tirados de publicações, soluções tecnológicas e projetos da Embrapa Territorial (unidade da Embrapa que trabalha com mapas, satélites, geotecnologias e inteligência territorial).
+Atende produtores rurais, extensionistas, estudantes, gestores públicos e técnicos.
+Regras:
+1. Use SOMENTE o que está nos trechos. Não invente números, datas, nomes, locais ou recomendações.
+2. Verifique se os trechos tratam mesmo do assunto da pergunta. Se nenhum trata, responda apenas: "Não encontrei esse assunto nos documentos da Embrapa Territorial." e não cite fontes.
+3. Se os trechos respondem só em parte, diga o que eles explicam e o que não cobrem.
+4. Linguagem simples, frases curtas, no máximo 150 palavras. Explique termos técnicos.
+5. Depois de cada informação, indique o número do trecho entre colchetes, por exemplo [1] ou [2][3].
+6. Responda em português do Brasil.`;
+
+async function ativarIA() {
+  if (!navigator.gpu) { estado("estadoIA", "Este navegador não tem WebGPU, necessário para a IA local (use Chrome ou Edge atualizados, no computador). A busca de trechos continua funcionando.", false); return; }
+  const adaptador = await navigator.gpu.requestAdapter();
+  if (!adaptador) { estado("estadoIA", "Não foi possível acessar a placa de vídeo. A busca de trechos continua funcionando.", false); return; }
+  const sufixo = adaptador.features.has("shader-f16") ? MODELOS_MLC.f16 : MODELOS_MLC.f32;
+  const id = $("modelo").value + sufixo;
+  $("ativar").disabled = true; $("modelo").disabled = true;
+  try {
+    const webllm = await import("https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.85/+esm");
+    estado("estadoIA", "Preparando a IA…", false);
+    motor = await webllm.CreateMLCEngine(id, {
+      initProgressCallback: p => estado("estadoIA", `Baixando a IA (só na primeira vez): ${Math.round((p.progress || 0) * 100)}% · ${p.text?.split("[")[0] ?? ""}`.slice(0, 160), false),
+    });
+    estado("estadoIA", `IA pronta (${$("modelo").selectedOptions[0].text.split("(")[0].trim()}). Ela roda no seu computador.`, true);
+    $("ativar").textContent = "IA ativa";
+  } catch (e) {
+    console.error(e); motor = null; $("ativar").disabled = false; $("modelo").disabled = false;
+    estado("estadoIA", "Não foi possível carregar a IA neste computador (memória de vídeo insuficiente?). Tente o modelo leve. A busca de trechos continua funcionando.", false);
+  }
+}
+$("ativar").addEventListener("click", ativarIA);
+
+/* ---------- conversa */
+function citacoes(texto, n) {
+  return esc(texto).replace(/\[(\d+)\]/g, (m, k) => +k >= 1 && +k <= n ? `<a class="cit" href="#f-${n}-${k}">${k}</a>` : m)
+    .split(/\n{2,}/).map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`).join("");
+}
+function cartaoFonte(f, k, id) {
+  const d = f.doc, t = TIPOS[d.k], onde = f.pagina > 0 ? `página ${f.pagina} do texto completo` : "resumo";
+  const pdf = d.pdf && f.pagina > 0 ? `<a href="${esc(d.pdf)}#page=${f.pagina}" target="_blank" rel="noopener">Abrir o PDF na página ${f.pagina} ↗</a>` : "";
+  return `<div class="fonte ${t}" id="f-${id}-${k}">
+    <div class="topo"><b>[${k}]</b><span>${NOME_TIPO[t]}</span><span>${esc(d.a || "")}</span><span>${esc(d.d)}</span><span>${onde}</span></div>
+    <h4>${esc(d.t)}</h4>
+    <blockquote>${esc(f.texto.length > 600 ? f.texto.slice(0, 600).replace(/\s\S*$/, "") + "…" : f.texto)}</blockquote>
+    <div class="links"><a href="${esc(d.l)}" target="_blank" rel="noopener">Ver no Portal Embrapa ↗</a>${pdf}${d.o ? `<a href="${esc(/^https?:/.test(d.o) ? d.o : "https://" + d.o)}" target="_blank" rel="noopener">Acessar a solução ↗</a>` : ""}${d.au ? `<span style="color:var(--muted)">${esc(d.au)}</span>` : ""}</div>
+  </div>`;
+}
+
+let nMsg = 0;
+async function perguntar(q) {
+  q = q.trim(); if (!q || ocupado || !extrator) return;
+  ocupado = true; $("inicio")?.remove();
+  const id = ++nMsg, conv = $("conversa");
+  conv.insertAdjacentHTML("beforeend", `<div class="msg eu"><div>${esc(q)}</div></div><div class="msg ia" id="m-${id}"><div class="resp"><span class="cursor">Procurando nos documentos</span></div></div>`);
+  const caixa = $(`m-${id}`), resp = caixa.querySelector(".resp");
+  caixa.scrollIntoView({behavior: "smooth", block: "start"});
+  // pergunta curta de continuação ("e no Cerrado?"): busca junto com a anterior
+  const anterior = historico.at(-1)?.q;
+  const consulta = anterior && q.split(/\s+/).length <= 6 ? anterior + " " + q : q;
+  const fontes = await buscarTrechos(consulta);
+  const blocoFontes = `<details class="fontes" ${motor ? "" : "open"}><summary>Trechos usados (${fontes.length})</summary>${fontes.map((f, k) => cartaoFonte(f, k + 1, id)).join("")}</details>`;
+  if (!motor) {
+    resp.innerHTML = `<p>Estes são os trechos mais relevantes que encontrei. Para receber uma resposta escrita a partir deles, ative a IA no topo da página.</p>`;
+    caixa.insertAdjacentHTML("beforeend", blocoFontes);
+  } else {
+    const contexto = fontes.map((f, k) => `[${k + 1}] ${f.doc.t} (${NOME_TIPO[TIPOS[f.doc.k]]}, ${f.doc.a || "s.d."}${f.pagina ? ", p. " + f.pagina : ""})\n${f.texto}`).join("\n\n");
+    const msgs = [{role: "system", content: REGRAS}];
+    const ult = historico.at(-1);
+    if (ult) msgs.push({role: "user", content: ult.q}, {role: "assistant", content: ult.r});
+    msgs.push({role: "user", content: `TRECHOS:\n\n${contexto}\n\nPERGUNTA: ${q}`});
+    resp.innerHTML = `<span class="cursor"></span>`;
+    caixa.insertAdjacentHTML("beforeend", blocoFontes);
+    let texto = "";
+    try {
+      const fluxo = await motor.chat.completions.create({messages: msgs, temperature: 0.2, max_tokens: 450, stream: true});
+      for await (const parte of fluxo) {
+        texto += parte.choices[0]?.delta?.content || "";
+        resp.innerHTML = citacoes(texto, fontes.length) + `<span class="cursor"></span>`;
+      }
+      resp.innerHTML = citacoes(texto, fontes.length) + `<div class="aviso">Resposta gerada por IA no seu navegador a partir dos trechos abaixo. Confira as fontes.</div>`;
+      historico.push({q, r: texto});
+    } catch (e) {
+      console.error(e); resp.innerHTML = `<p>A IA falhou ao responder. Veja os trechos encontrados abaixo.</p>`;
+      caixa.querySelector("details").open = true;
+    }
+  }
+  ocupado = false;
+}
+
+$("form").addEventListener("submit", e => { e.preventDefault(); const q = $("q").value; $("q").value = ""; perguntar(q); });
+$("exemplos").innerHTML = EXEMPLOS.map(x => `<button type="button">${esc(x)}</button>`).join("");
+$("exemplos").addEventListener("click", e => { const b = e.target.closest("button"); if (b) perguntar(b.textContent); });
+
+async function iniciar() {
+  const [info, docs, tr, bits] = await Promise.all([
+    fetch("dados/info.json").then(r => r.json()), fetch("dados/docs.json").then(r => r.json()),
+    fetch("dados/trechos.json").then(r => r.json()), fetch("dados/bits.bin").then(r => r.arrayBuffer()),
+  ]);
+  INFO = info; DOCS = docs; TR = tr; BITS = new Uint8Array(bits); N = info.n;
+  $("sobreDados").textContent = `Base: ${fmt(info.documentos)} documentos da ${info.unidades.join(", ")} (${fmt(info.publicacoes)} publicações, ${fmt(info.solucoes)} soluções, ${fmt(info.projetos)} projetos), ${fmt(info.com_texto_completo)} com texto completo, divididos em ${fmt(info.n)} trechos. Exportação do Redape de ${info.exportacao}.`;
+  estado("estadoBusca", "Preparando a busca por significado (cerca de 110 MB, só na primeira visita)…", false);
+  const {pipeline, env} = await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1");
+  env.allowLocalModels = false;
+  extrator = await pipeline("feature-extraction", "Xenova/multilingual-e5-base", {dtype: "q8"});
+  estado("estadoBusca", `Busca pronta: ${fmt(info.documentos)} documentos, ${fmt(info.n)} trechos.`, true);
+}
+iniciar().catch(e => { console.error(e); estado("estadoBusca", "Erro ao carregar a base.", false); });
+</script>
+</body>
+</html>
