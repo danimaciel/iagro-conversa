@@ -52,7 +52,8 @@ h1 em{font-style:normal;color:var(--leaf)}
 .painel .estado{flex-basis:100%;font-size:13px;opacity:.85;display:flex;gap:8px;align-items:center}
 .ponto{width:8px;height:8px;border-radius:50%;background:var(--amber);flex:none}
 .ok .ponto{background:var(--leaf)}
-main{padding:24px 0 140px}
+main.wrap{padding-top:24px;padding-bottom:190px}
+.rel,.fontes,.msg.ia .resp{scroll-margin-bottom:150px;scroll-margin-top:16px}
 .vazio{color:var(--muted);text-align:center;padding:24px 0}
 .exemplos{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px}
 .exemplos button{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:99px;padding:7px 13px;cursor:pointer}
@@ -247,18 +248,39 @@ async function ativarIA() {
   $("ativar").disabled = true; $("modelo").disabled = true;
   try {
     const webllm = await import("https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.85/+esm");
-    estado("estadoIA", "Preparando a IA…", false);
+    // IndexedDB guarda melhor arquivos grandes que o cache padrão (que às vezes recusa e faz baixar de novo);
+    // armazenamento persistente evita que o navegador apague o modelo para liberar espaço.
+    const appConfig = {...webllm.prebuiltAppConfig, cacheBackend: "indexeddb"};
+    try { await navigator.storage?.persist?.(); } catch (e) { /* opcional */ }
+    const guardada = await webllm.hasModelInCache(id, appConfig).catch(() => false);
+    const acao = guardada ? "Carregando a IA guardada no seu navegador" : "Baixando a IA (só na primeira vez)";
+    estado("estadoIA", acao + "…", false);
     motor = await webllm.CreateMLCEngine(id, {
-      initProgressCallback: p => estado("estadoIA", `Baixando a IA (só na primeira vez): ${Math.round((p.progress || 0) * 100)}% · ${p.text?.split("[")[0] ?? ""}`.slice(0, 160), false),
+      appConfig,
+      initProgressCallback: p => estado("estadoIA", `${acao}: ${Math.round((p.progress || 0) * 100)}%`, false),
     });
-    estado("estadoIA", `IA pronta (${$("modelo").selectedOptions[0].text.split("(")[0].trim()}). Ela roda no seu computador.`, true);
+    estado("estadoIA", `IA pronta (${$("modelo").selectedOptions[0].text.split("(")[0].trim()}). Ela roda no seu computador${guardada ? "" : " e fica guardada para as próximas visitas"}.`, true);
     $("ativar").textContent = "IA ativa";
+    try { localStorage.setItem("iagro-modelo", $("modelo").value); } catch (e) { /* sem armazenamento local */ }
   } catch (e) {
     console.error(e); motor = null; $("ativar").disabled = false; $("modelo").disabled = false;
     estado("estadoIA", "Não foi possível carregar a IA neste computador (memória de vídeo insuficiente?). Tente o modelo leve. A busca de trechos continua funcionando.", false);
   }
 }
 $("ativar").addEventListener("click", ativarIA);
+// Quem já ativou a IA: escolhe o mesmo modelo e ativa sozinho se ele estiver guardado no navegador
+async function reativarIA() {
+  let salvo = null;
+  try { salvo = localStorage.getItem("iagro-modelo"); } catch (e) { return; }
+  if (!salvo || !navigator.gpu || ![...$("modelo").options].some(o => o.value === salvo)) return;
+  $("modelo").value = salvo;
+  try {
+    const webllm = await import("https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.85/+esm");
+    const adaptador = await navigator.gpu.requestAdapter();
+    const id = salvo + (adaptador?.features.has("shader-f16") ? MODELOS_MLC.f16 : MODELOS_MLC.f32);
+    if (await webllm.hasModelInCache(id, {...webllm.prebuiltAppConfig, cacheBackend: "indexeddb"})) ativarIA();
+  } catch (e) { /* segue sem IA; a pessoa pode ativar pelo botão */ }
+}
 
 /* ---------- conversa */
 function citacoes(texto, n) {
@@ -320,6 +342,7 @@ async function perguntar(q) {
         resp.innerHTML = citacoes(texto, fontes.length) + `<span class="cursor"></span>`;
       }
       resp.innerHTML = citacoes(texto, fontes.length) + `<div class="aviso">Resposta gerada por IA no seu navegador a partir dos trechos abaixo. Confira as fontes.</div>`;
+      (caixa.querySelector(".rel") || caixa.querySelector(".fontes"))?.scrollIntoView({behavior: "smooth", block: "nearest"});
       historico.push({q, r: texto});
     } catch (e) {
       console.error(e); resp.innerHTML = `<p>A IA falhou ao responder. Veja os trechos encontrados abaixo.</p>`;
@@ -347,6 +370,7 @@ async function iniciar() {
   env.allowLocalModels = false;
   extrator = await pipeline("feature-extraction", "Xenova/multilingual-e5-base", {dtype: "q8"});
   estado("estadoBusca", `Busca pronta: ${fmt(info.documentos)} documentos, ${fmt(info.n)} trechos.`, true);
+  reativarIA();
 }
 iniciar().catch(e => { console.error(e); estado("estadoBusca", "Erro ao carregar a base.", false); });
 </script>
