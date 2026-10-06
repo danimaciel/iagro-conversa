@@ -30,6 +30,8 @@ NAO_SEI = re.compile(r"não encontrei", re.I)
 ap = argparse.ArgumentParser()
 ap.add_argument("--modelos", nargs="+", default=["qwen2.5:3b"])
 ap.add_argument("--n", type=int, default=0, help="só as n primeiras perguntas (0 = todas)")
+ap.add_argument("--fontes", type=int, default=5, help="trechos entregues ao modelo (a página usa 3 no modo celular)")
+ap.add_argument("--max-tokens", type=int, default=450)
 ap.add_argument("--threads", type=int, default=0, help="núcleos do processador para o Ollama (0 = todos)")
 ap.add_argument("--limiar", type=float, default=0.857,
                 help="abaixo deste cosseno do melhor trecho não chama o modelo (equivale a 0,852 na página, que usa o e5 q8)")
@@ -66,7 +68,7 @@ def fontes(q):
             continue
         por[c] = por.get(c, 0) + 1
         out.append(i)
-        if len(out) == 5:
+        if len(out) == args.fontes:
             break
     # como a página: uma vaga para o melhor projeto/solução, se estiver a até 0,015 do 5º trecho
     if not any(tr.codigo[i][:3] in ("PRJ", "TEC") for i in out):
@@ -100,7 +102,7 @@ for modelo in args.modelos:
             cods = [tr.codigo[i] for i in ids]
             x = requests.post("http://localhost:11434/api/chat", timeout=900, json={
                 "model": modelo, "messages": prompt(r.pergunta, ids), "stream": False,
-                "options": {"temperature": 0.2, "num_predict": 450, "num_ctx": 4096,
+                "options": {"temperature": 0.2, "num_predict": args.max_tokens, "num_ctx": 4096,
                             **({"num_thread": args.threads} if args.threads else {})}}).json()
             resp = x["message"]["content"]
         citados = {cods[int(k) - 1] for k in re.findall(r"\[(\d+)\]", resp) if 1 <= int(k) <= len(cods)}
@@ -112,7 +114,7 @@ for modelo in args.modelos:
         print(f"{modelo} {r.id} {linhas[-1]['segundos']}s citou_esperado={linhas[-1]['citou_esperado']} "
               f"nao_encontrei={linhas[-1]['nao_encontrei']}", flush=True)
     df = pd.DataFrame(linhas)
-    df.to_csv(RAIZ / "avaliacao" / f"resultado_{re.sub(r'[^\w.-]', '_', modelo)}.csv", index=False, encoding="utf-8")
+    df.to_csv(RAIZ / "avaliacao" / f"resultado_{re.sub(r'[^\w.-]', '_', modelo)}_{args.fontes}fontes.csv", index=False, encoding="utf-8")
     com, sem = df[df.avaliacao != "X"], df[df.avaliacao == "X"]
     resumo.append({"modelo": modelo, "busca trouxe esperado": f"{com.busca_trouxe.sum()}/{len(com)}",
                    "citou esperado": f"{com.citou_esperado.sum()}/{len(com)}",

@@ -126,6 +126,7 @@ dialog button{font:600 14px Inter,sans-serif;border:0;border-radius:8px;backgrou
       <label for="modelo">IA para escrever a resposta:</label>
       <select id="modelo">
         <option value="gemma-2-2b-it" selected>Recomendada · Gemma 2 2B (cerca de 1,5 GB)</option>
+        <option value="gemma3-1b-it" data-leve="1" data-so-f16="1">Leve, para celular · Gemma 3 1B (cerca de 700 MB)</option>
         <option value="Qwen2.5-3B-Instruct">Mais cautelosa · Qwen 2.5 3B (cerca de 2 GB)</option>
         <option value="Qwen2.5-7B-Instruct">Mais completa · Qwen 2.5 7B (cerca de 4,5 GB; precisa de placa de vídeo boa)</option>
       </select>
@@ -183,6 +184,10 @@ const MODELOS_MLC = {  // sufixo do modelo na WebLLM conforme a placa aceita flo
 };
 const TIPOS = ["PUB", "TEC", "PRJ"], NOME_TIPO = {PUB: "Publicação", TEC: "Solução tecnológica", PRJ: "Projeto"};
 const N_FONTES = 5, CANDIDATOS = 200, MAX_POR_DOC = 2;
+// Celular ou aparelho com pouca memória: modelo leve, menos trechos para a IA ler e respostas mais curtas
+const APARELHO_LEVE = !!(navigator.userAgentData?.mobile || /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent) || (navigator.deviceMemory && navigator.deviceMemory <= 4));
+const modoLeve = () => APARELHO_LEVE || $("modelo").selectedOptions[0]?.dataset.leve === "1";
+if (APARELHO_LEVE) { const o = document.querySelector('#modelo option[data-leve="1"]'); if (o) o.selected = true; }
 // Abaixo deste cosseno (melhor trecho), a base não trata do assunto: não chama a IA.
 // Calibrado no gabarito da Embrapa Territorial com o modelo do navegador (q8): barra 8 de 11 perguntas
 // fora do tema e nenhuma das 26 com resposta (a menor delas: 0,859). Recalibrar ao incluir outras unidades.
@@ -267,7 +272,9 @@ async function ativarIA() {
   if (!navigator.gpu) { estado("estadoIA", "Este navegador não tem WebGPU, necessário para a IA local (use Chrome ou Edge atualizados, no computador). A busca de trechos continua funcionando.", false); return; }
   const adaptador = await navigator.gpu.requestAdapter();
   if (!adaptador) { estado("estadoIA", "Não foi possível acessar a placa de vídeo. A busca de trechos continua funcionando.", false); return; }
-  const sufixo = adaptador.features.has("shader-f16") ? MODELOS_MLC.f16 : MODELOS_MLC.f32;
+  const temF16 = adaptador.features.has("shader-f16");
+  if (!temF16 && $("modelo").selectedOptions[0].dataset.soF16) { estado("estadoIA", "Este aparelho não suporta o modelo leve (Gemma 3). Escolha outro modelo ou use só a busca.", false); return; }
+  const sufixo = temF16 ? MODELOS_MLC.f16 : MODELOS_MLC.f32;
   const id = $("modelo").value + sufixo;
   $("ativar").disabled = true; $("modelo").disabled = true;
   try {
@@ -289,7 +296,7 @@ async function ativarIA() {
     try { localStorage.setItem("iagro-modelo", $("modelo").value); } catch (e) { /* sem armazenamento local */ }
   } catch (e) {
     console.error(e); motor = null; $("ativar").disabled = false; $("modelo").disabled = false;
-    estado("estadoIA", "Não foi possível carregar a IA neste computador (memória de vídeo insuficiente?). Tente o modelo leve. A busca de trechos continua funcionando.", false);
+    estado("estadoIA", "Não foi possível carregar a IA neste aparelho (provavelmente falta memória de vídeo). Tente o modelo leve, para celular. A busca de trechos continua funcionando.", false);
   }
 }
 $("ativar").addEventListener("click", ativarIA);
@@ -405,16 +412,17 @@ async function perguntar(q) {
     resp.innerHTML = `<p>Estes são os trechos mais relevantes que encontrei. Para receber uma resposta escrita a partir deles, ative a IA no topo da página.</p>`;
     caixa.insertAdjacentHTML("beforeend", quadroRelacionados(fontes.relacionados) + blocoFontes);
   } else {
-    const contexto = fontes.map((f, k) => `[${k + 1}] ${f.doc.t} (${NOME_TIPO[TIPOS[f.doc.k]]}, ${f.doc.a || "s.d."}${f.pagina ? ", p. " + f.pagina : ""})\n${f.texto}`).join("\n\n");
+    const nIA = modoLeve() ? 3 : fontes.length;
+    const contexto = fontes.slice(0, nIA).map((f, k) => `[${k + 1}] ${f.doc.t} (${NOME_TIPO[TIPOS[f.doc.k]]}, ${f.doc.a || "s.d."}${f.pagina ? ", p. " + f.pagina : ""})\n${f.texto}`).join("\n\n");
     const msgs = [{role: "system", content: REGRAS}];
-    const ult = historico.at(-1);
+    const ult = modoLeve() ? null : historico.at(-1);  // no modo leve, sem o contexto da pergunta anterior
     if (ult) msgs.push({role: "user", content: ult.q}, {role: "assistant", content: ult.r});
     msgs.push({role: "user", content: `TRECHOS:\n\n${contexto}\n\nPERGUNTA: ${q}\n\nResponda à pergunta usando os trechos acima e indique o número de cada trecho usado, como [1].`});
-    resp.innerHTML = `<span class="cursor"></span>`;
+    resp.innerHTML = `<p class="espera"><span class="cursor">Lendo os trechos e preparando a resposta${modoLeve() ? " (no celular pode levar até 1 minuto)" : ""}</span></p>`;
     caixa.insertAdjacentHTML("beforeend", quadroRelacionados(fontes.relacionados) + blocoFontes);
     let texto = "";
     try {
-      const fluxo = await motor.chat.completions.create({messages: msgs, temperature: 0.2, max_tokens: 450, stream: true});
+      const fluxo = await motor.chat.completions.create({messages: msgs, temperature: 0.2, max_tokens: modoLeve() ? 300 : 450, stream: true});
       for await (const parte of fluxo) {
         if (!valendo()) return;
         texto += parte.choices[0]?.delta?.content || "";
@@ -426,7 +434,10 @@ async function perguntar(q) {
       historico.push({q, r: texto});
     } catch (e) {
       if (!valendo()) return;
-      console.error(e); resp.innerHTML = `<p>A IA falhou ao responder. Veja os trechos encontrados abaixo.</p>`;
+      console.error(e);
+      const leve = document.querySelector('#modelo option[data-leve="1"]');
+      const sugestao = leve && !leve.selected ? ` <button type="button" class="tentarLeve" style="font:600 13px Inter,sans-serif;border:0;border-radius:8px;background:var(--amber);color:#1b1206;padding:6px 10px;cursor:pointer">Tentar com o modelo leve</button>` : "";
+      resp.innerHTML = `<p>A IA falhou ao responder (no celular, costuma ser falta de memória). Os trechos e projetos encontrados estão abaixo.${sugestao}</p>`;
       caixa.querySelector("details").open = true;
     }
   }
@@ -444,6 +455,15 @@ function novaConversa() {
   window.scrollTo({top: 0, behavior: "smooth"}); $("q").focus();
 }
 $("limpar").addEventListener("click", novaConversa);
+document.addEventListener("click", async e => {
+  if (!e.target.closest(".tentarLeve")) return;
+  try { await motor?.unload(); } catch (err) { /* segue */ }
+  motor = null; document.querySelector('#modelo option[data-leve="1"]').selected = true;
+  $("ativar").disabled = false; $("modelo").disabled = false; $("ativar").textContent = "Ativar IA";
+  e.target.disabled = true; e.target.textContent = "Carregando o modelo leve…";
+  await ativarIA();
+  e.target.textContent = motor ? "Modelo leve pronto: pergunte de novo" : "Não foi possível";
+});
 
 $("form").addEventListener("submit", e => { e.preventDefault(); const q = $("q").value; $("q").value = ""; perguntar(q); });
 $("exemplos").innerHTML = EXEMPLOS.map(x => `<button type="button">${esc(x)}</button>`).join("");

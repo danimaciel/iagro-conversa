@@ -41,7 +41,16 @@ esperado esteve entre os 5 trechos em 23 de 23 perguntas, em todas as versões.
 | v2: base completa, sem filtro | Gemma 2 2B | 19/23 | 1/23 | 2/7 | 47 s* |
 | **v3: base completa, filtro 0,852 + instruções revistas** | **Gemma 2 2B** | **20/23** | **1/23** | **5/7** | **35 s*** |
 
+| v3, 3 trechos para o modelo, até 300 palavras | Gemma 2 2B | 20/23 | 1/23 | 5/7 | 22 s* |
+| v3, 3 trechos, até 300 palavras | Gemma 3 1B | 18/23 | 6/23 | 5/7 | 18 s* |
+
 \* com metade do processador.
+
+**Modo celular** (aparelho móvel ou com até 4 GB de memória): a página pré-seleciona o Gemma 3 1B (cerca de 700 MB,
+metade do Gemma 2 2B, que costuma faltar memória no celular), entrega 3 trechos ao modelo em vez de 5 e limita a
+resposta. Na avaliação, 3 trechos não pioram o Gemma 2 2B e reduzem o tempo em 37%. O Gemma 3 1B é mais fraco
+(diz "não encontrei" quando a base responde em 6 de 23), por isso é só a opção leve. Se a IA falhar, a página
+oferece "Tentar com o modelo leve".
 
 Decisões:
 - **Gemma 2 2B é o modelo padrão.** Qwen 2.5 3B é cauteloso demais (diz "não encontrei" quando a base responde);
