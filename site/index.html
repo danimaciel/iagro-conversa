@@ -255,7 +255,8 @@ async function ativarIA() {
     const guardada = await webllm.hasModelInCache(id, appConfig).catch(() => false);
     const acao = guardada ? "Carregando a IA guardada no seu navegador" : "Baixando a IA (só na primeira vez)";
     estado("estadoIA", acao + "…", false);
-    motor = await webllm.CreateMLCEngine(id, {
+    // A IA roda num Web Worker: a página não trava enquanto ela trabalha
+    motor = await webllm.CreateWebWorkerMLCEngine(new Worker(new URL("ia-worker.js", import.meta.url), {type: "module"}), id, {
       appConfig,
       initProgressCallback: p => estado("estadoIA", `${acao}: ${Math.round((p.progress || 0) * 100)}%`, false),
     });
