@@ -2,7 +2,7 @@ name: Atualizar base e publicar página
 
 # Todo mês: baixa a exportação do Redape, baixa e extrai só os PDFs novos (texto completo da Infoteca-e),
 # divide em trechos, calcula vetores só dos trechos novos e publica. Textos e vetores ficam em cache
-# como anexos da release "cache".
+# como anexos da release "cache". Mudanças só na página usam o fluxo rápido pagina.yml.
 on:
   schedule:
     - cron: "0 12 12 * *"   # dia 12 de cada mês, 9h de Brasília (depois do iagro-embrapa)
@@ -12,9 +12,6 @@ on:
         description: "Exportação AAAA-MM (vazio = mais recente)"
         required: false
         default: ""
-  push:
-    branches: [main]
-    paths: ["site/**"]
 
 permissions:
   contents: write
@@ -173,6 +170,11 @@ jobs:
           python pipeline/vetores.py juntar
           gh release upload "$CACHE_TAG" dados/cache/e5.npy dados/cache/e5_hash.parquet --clobber
       - run: python pipeline/site_dados.py ${{ needs.preparar.outputs.mes }}
+      - name: Guardar os dados da página (para publicar só a página depois, em 1 a 2 minutos)
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          tar -czf site-dados.tar.gz -C site dados
+          gh release upload "$CACHE_TAG" site-dados.tar.gz --clobber
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with: { path: site }
