@@ -53,6 +53,7 @@ h1 em{font-style:normal;color:var(--leaf)}
 .ponto{width:8px;height:8px;border-radius:50%;background:var(--amber);flex:none}
 .ok .ponto{background:var(--leaf)}
 main.wrap{padding-top:24px;padding-bottom:190px}
+body.com-selecao main.wrap{padding-bottom:250px}
 .rel,.fontes,.msg.ia .resp{scroll-margin-bottom:150px;scroll-margin-top:16px}
 .vazio{color:var(--muted);text-align:center;padding:24px 0}
 .exemplos{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px}
@@ -81,6 +82,16 @@ main.wrap{padding-top:24px;padding-bottom:190px}
 .rel .item b{color:var(--cor);font-size:12px;text-transform:uppercase;letter-spacing:.05em;margin-right:6px}
 .rel .item.TEC{--cor:var(--tec)} .rel .item.PRJ{--cor:var(--prj)}
 .rel .item small{color:var(--muted)}
+.sel{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none}
+.sel input{accent-color:var(--green-700);width:15px;height:15px;cursor:pointer}
+.fonte .topo .sel{margin-left:auto}
+.rel .item .sel{float:right;margin-left:8px}
+.resp .sel{margin-top:8px}
+.selecao{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:8px;padding:8px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--green-500);box-shadow:var(--shadow);font-size:14px}
+.selecao b{color:var(--green-700)}
+.selecao .acoes{display:flex;flex-wrap:wrap;gap:6px;margin-left:auto}
+.selecao button,.selecao a{font:500 13px Inter,sans-serif;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:6px 10px;cursor:pointer;text-decoration:none}
+.selecao button.forte{background:var(--green-700);border-color:var(--green-700);color:#fff}
 .cursor::after{content:"▍";animation:pisca 1s infinite;color:var(--green-500)}
 @keyframes pisca{50%{opacity:0}}
 .entrada{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(transparent, var(--bg) 30%);padding:24px 0 14px}
@@ -136,6 +147,16 @@ dialog button{font:600 14px Inter,sans-serif;border:0;border-radius:8px;backgrou
 
 <div class="entrada">
   <div class="wrap">
+    <div class="selecao" id="selecao" hidden>
+      <span><b id="nSel">0</b> selecionado(s)</span>
+      <div class="acoes">
+        <button type="button" class="forte" id="selCopiar">Copiar</button>
+        <a id="selEmail" href="#">E-mail</a>
+        <a id="selWhats" href="#" target="_blank" rel="noopener">WhatsApp</a>
+        <button type="button" id="selCompartilhar" hidden>Compartilhar</button>
+        <button type="button" id="selLimpar">Limpar seleção</button>
+      </div>
+    </div>
     <form id="form"><input id="q" autocomplete="off" placeholder="Escreva sua pergunta…" aria-label="Sua pergunta"><button type="button" id="limpar" class="sec" hidden title="Apaga a conversa e começa de novo (a IA continua carregada)">Nova conversa</button><button>Enviar</button></form>
     <small>Projeto experimental. Respostas de IA podem conter erros: confira sempre as fontes.</small>
   </div>
@@ -295,7 +316,7 @@ function cartaoFonte(f, k, id) {
   const d = f.doc, t = TIPOS[d.k], onde = f.pagina > 0 ? `página ${f.pagina} do texto completo` : "resumo";
   const pdf = d.pdf && f.pagina > 0 ? `<a href="${esc(d.pdf)}#page=${f.pagina}" target="_blank" rel="noopener">Abrir o PDF na página ${f.pagina} ↗</a>` : "";
   return `<div class="fonte ${t}" id="f-${id}-${k}">
-    <div class="topo"><b>[${k}]</b><span>${NOME_TIPO[t]}</span><span>${esc(d.a || "")}</span><span>${esc(d.d)}</span><span>${onde}</span></div>
+    <div class="topo"><b>[${k}]</b><span>${NOME_TIPO[t]}</span><span>${esc(d.a || "")}</span><span>${esc(d.d)}</span><span>${onde}</span>${caixaSel("d:" + d.c, d.c)}</div>
     <h4>${esc(d.t)}</h4>
     <blockquote>${esc(f.texto.length > 600 ? f.texto.slice(0, 600).replace(/\s\S*$/, "") + "…" : f.texto)}</blockquote>
     <div class="links"><a href="${esc(d.l)}" target="_blank" rel="noopener">Ver no Portal Embrapa ↗</a>${pdf}${d.o ? `<a href="${esc(/^https?:/.test(d.o) ? d.o : "https://" + d.o)}" target="_blank" rel="noopener">Acessar a solução ↗</a>` : ""}${d.au ? `<span style="color:var(--muted)">${esc(d.au)}</span>` : ""}</div>
@@ -306,9 +327,60 @@ function quadroRelacionados(rel) {
   if (!rel?.length) return "";
   return `<div class="rel"><h5>Projetos e soluções relacionados</h5>${rel.map(d => {
     const t = TIPOS[d.k];
-    return `<div class="item ${t}"><b>${t === "PRJ" ? "Projeto" : "Solução"}</b><a href="${esc(d.l)}" target="_blank" rel="noopener">${esc(d.t)}</a> <small>· ${esc(d.d)}</small>${d.o ? ` · <a href="${esc(/^https?:/.test(d.o) ? d.o : "https://" + d.o)}" target="_blank" rel="noopener">Acessar ↗</a>` : ""}</div>`;
+    return `<div class="item ${t}">${caixaSel("d:" + d.c, d.c)}<b>${t === "PRJ" ? "Projeto" : "Solução"}</b><a href="${esc(d.l)}" target="_blank" rel="noopener">${esc(d.t)}</a> <small>· ${esc(d.d)}</small>${d.o ? ` · <a href="${esc(/^https?:/.test(d.o) ? d.o : "https://" + d.o)}" target="_blank" rel="noopener">Acessar ↗</a>` : ""}</div>`;
   }).join("")}</div>`;
 }
+
+/* ---------- seleção e envio */
+const SEL = new Map(), RESPOSTAS = new Map();
+function caixaSel(chave, codigo, rotulo = "Selecionar") {
+  return `<label class="sel"><input type="checkbox" data-chave="${esc(chave)}" ${codigo ? `data-codigo="${esc(codigo)}"` : ""} ${SEL.has(chave) ? "checked" : ""}> ${rotulo}</label>`;
+}
+function linkPdf(d) { return d.pdf || ""; }
+function textoSelecao() {
+  const linhas = ["iAgro · Embrapa Territorial", "Projeto experimental com dados públicos da Embrapa (não é serviço oficial).", ""];
+  const resps = [...SEL.entries()].filter(([k]) => k.startsWith("r:"));
+  for (const [, r] of resps) {
+    linhas.push(`Pergunta: ${r.q}`, `Resposta (gerada por IA; confira as fontes): ${r.texto.replace(/\s+/g, " ").trim()}`, "");
+  }
+  const docs = [...SEL.entries()].filter(([k]) => k.startsWith("d:")).map(([, d]) => d);
+  if (docs.length) {
+    linhas.push("Documentos selecionados:");
+    docs.forEach((d, n) => {
+      linhas.push(`${n + 1}. ${d.t} (${NOME_TIPO[TIPOS[d.k]]}${d.a ? ", " + d.a : ""})`, `   ${d.l}`);
+      if (linkPdf(d)) linhas.push(`   PDF: ${linkPdf(d)}`);
+      if (d.o) linhas.push(`   Onde encontrar: ${d.o}`);
+    });
+    linhas.push("");
+  }
+  linhas.push("Encontrado com o iAgro Conversa: https://danimaciel.github.io/iagro-conversa/");
+  return linhas.join("\n");
+}
+function atualizarSelecao() {
+  $("selecao").hidden = SEL.size === 0;
+  document.body.classList.toggle("com-selecao", SEL.size > 0);
+  $("nSel").textContent = SEL.size;
+  const texto = textoSelecao();
+  $("selEmail").href = "mailto:?subject=" + encodeURIComponent("Documentos da Embrapa Territorial (iAgro)") + "&body=" + encodeURIComponent(texto);
+  $("selWhats").href = "https://wa.me/?text=" + encodeURIComponent(texto);
+  $("selCompartilhar").hidden = !navigator.share;
+  document.querySelectorAll(".sel input").forEach(c => { c.checked = SEL.has(c.dataset.chave); });
+}
+document.addEventListener("change", e => {
+  const c = e.target.closest(".sel input"); if (!c) return;
+  const chave = c.dataset.chave;
+  if (!c.checked) SEL.delete(chave);
+  else if (chave.startsWith("d:")) SEL.set(chave, DOCS.find(d => d.c === c.dataset.codigo));
+  else SEL.set(chave, RESPOSTAS.get(chave));
+  atualizarSelecao();
+});
+$("selCopiar").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(textoSelecao()); $("selCopiar").textContent = "Copiado!"; }
+  catch (e) { $("selCopiar").textContent = "Não foi possível copiar"; }
+  setTimeout(() => { $("selCopiar").textContent = "Copiar"; }, 2000);
+});
+$("selCompartilhar").addEventListener("click", () => navigator.share({title: "Documentos da Embrapa Territorial (iAgro)", text: textoSelecao()}).catch(() => {}));
+$("selLimpar").addEventListener("click", () => { SEL.clear(); atualizarSelecao(); });
 
 let nMsg = 0;
 async function perguntar(q) {
@@ -348,7 +420,8 @@ async function perguntar(q) {
         texto += parte.choices[0]?.delta?.content || "";
         resp.innerHTML = citacoes(texto, fontes.length) + `<span class="cursor"></span>`;
       }
-      resp.innerHTML = citacoes(texto, fontes.length) + `<div class="aviso">Resposta gerada por IA no seu navegador a partir dos trechos abaixo. Confira as fontes.</div>`;
+      RESPOSTAS.set("r:" + id, {q, texto, fontes: fontes.map(f => f.doc.c)});
+      resp.innerHTML = citacoes(texto, fontes.length) + `<div class="aviso">Resposta gerada por IA no seu navegador a partir dos trechos abaixo. Confira as fontes.</div>` + caixaSel("r:" + id, null, "Selecionar esta resposta");
       (caixa.querySelector(".rel") || caixa.querySelector(".fontes"))?.scrollIntoView({behavior: "smooth", block: "nearest"});
       historico.push({q, r: texto});
     } catch (e) {
