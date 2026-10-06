@@ -156,6 +156,11 @@ const N_FONTES = 5, CANDIDATOS = 200, MAX_POR_DOC = 2;
 // Calibrado no gabarito da Embrapa Territorial com o modelo do navegador (q8): barra 8 de 11 perguntas
 // fora do tema e nenhuma das 26 com resposta (a menor delas: 0,859). Recalibrar ao incluir outras unidades.
 const LIMIAR = 0.852;
+// Projetos e soluções viram poucos trechos e perdem as vagas para as publicações (36 mil trechos).
+// Uma vaga fica para o melhor projeto/solução se ele estiver a até 0,015 do 5º trecho
+// (gabarito: projeto/solução esperado entre as fontes em 19 de 20 perguntas, contra 16 sem a vaga).
+const MARGEM_PRJ_TEC = 0.015;
+let PT = [];  // índices dos trechos de projetos e soluções (contíguos no fim da base)
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
 const fmt = n => n.toLocaleString("pt-BR");
@@ -188,8 +193,9 @@ async function buscarTrechos(q) {
   const cand = [...s.keys()].sort((a, b) => s[b] - s[a]).slice(0, CANDIDATOS);
   // reordena com o vetor completo, lendo só as linhas dos candidatos
   const L = INFO.linhas_vet, f = INFO.escala / 127, nota = new Map(), grupos = [];
-  for (const i of [...cand].sort((a, b) => a - b)) { const g = grupos.at(-1); if (g && Math.floor(i / L) === Math.floor(g.ini / L) && i - g.fim <= 8) g.fim = i; else grupos.push({ini: i, fim: i}); }
-  const quer = new Set(cand);
+  const todos = [...new Set([...cand, ...PT])];
+  for (const i of todos.sort((a, b) => a - b)) { const g = grupos.at(-1); if (g && Math.floor(i / L) === Math.floor(g.ini / L) && i - g.fim <= 8) g.fim = i; else grupos.push({ini: i, fim: i}); }
+  const quer = new Set(todos);
   try {
     await Promise.all(grupos.map(async g => {
       const a = (g.ini % L) * D, z = (g.fim % L) * D + D - 1;
@@ -202,6 +208,10 @@ async function buscarTrechos(q) {
   // no máximo 2 trechos por documento, para variar as fontes
   const porDoc = new Map(), escolhidos = [];
   for (const i of cand) { const d = TR.d[i], n = porDoc.get(d) || 0; if (n >= MAX_POR_DOC) continue; porDoc.set(d, n + 1); escolhidos.push(i); if (escolhidos.length === N_FONTES) break; }
+  if (nota.size && escolhidos.length === N_FONTES && !escolhidos.some(i => DOCS[TR.d[i]].k > 0)) {
+    let melhor = -1; for (const i of PT) if (nota.has(i) && (melhor < 0 || nota.get(i) > nota.get(melhor))) melhor = i;
+    if (melhor >= 0 && nota.get(melhor) >= nota.get(escolhidos.at(-1)) - MARGEM_PRJ_TEC) escolhidos[N_FONTES - 1] = melhor;
+  }
   const lista = await Promise.all(escolhidos.map(async i => ({i, doc: DOCS[TR.d[i]], pagina: TR.p[i], texto: await textoTrecho(i), nota: nota.get(i)})));
   lista.fraca = nota.size > 0 && nota.get(cand[0]) < LIMIAR;
   return lista;
@@ -309,6 +319,7 @@ async function iniciar() {
   ]);
   REGRAS = await fetch("prompt.txt").then(r => r.text());
   INFO = info; DOCS = docs; TR = tr; BITS = new Uint8Array(bits); N = info.n;
+  PT = [...TR.d.keys()].filter(i => DOCS[TR.d[i]].k > 0);
   $("sobreDados").textContent = `Base: ${fmt(info.documentos)} documentos da ${info.unidades.join(", ")} (${fmt(info.publicacoes)} publicações, ${fmt(info.solucoes)} soluções, ${fmt(info.projetos)} projetos), ${fmt(info.com_texto_completo)} com texto completo, divididos em ${fmt(info.n)} trechos. Exportação do Redape de ${info.exportacao}.`;
   estado("estadoBusca", "Preparando a busca por significado (cerca de 110 MB, só na primeira visita)…", false);
   const {pipeline, env} = await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1");

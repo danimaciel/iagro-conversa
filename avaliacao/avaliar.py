@@ -42,6 +42,7 @@ E = np.load(DADOS / "cache" / "e5.npy")
 pos = pd.Series(np.arange(len(h)), index=h.to_numpy())
 tr = tr[tr.hash.isin(pos.index)].reset_index(drop=True)
 V = E[pos[tr.hash].to_numpy()].astype(np.float32)
+PT = np.where(tr.codigo.str[:3].isin(["PRJ", "TEC"]))[0]
 regras = (RAIZ / "site" / "prompt.txt").read_text(encoding="utf-8")
 g = pd.read_csv(RAIZ / "avaliacao" / "gabarito_territorial.csv", dtype=str).fillna("")
 if args.n:
@@ -67,6 +68,11 @@ def fontes(q):
         out.append(i)
         if len(out) == 5:
             break
+    # como a página: uma vaga para o melhor projeto/solução, se estiver a até 0,015 do 5º trecho
+    if not any(tr.codigo[i][:3] in ("PRJ", "TEC") for i in out):
+        b = PT[np.argmax(s[PT])]
+        if s[b] >= s[out[-1]] - 0.015:
+            out[-1] = b
     return out
 
 

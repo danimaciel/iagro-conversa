@@ -9,7 +9,10 @@ Um RAG (*retrieval-augmented generation*) que roda inteiro no navegador:
    título + resumo. Ficha catalográfica, expediente, sumário, listas de referências e tabelas numéricas são descartados.
 3. **Vetores:** multilingual-e5-base (`passage:` nos trechos, `query:` na pergunta).
 4. **Recuperação:** vetores de 1 bit selecionam 200 candidatos; vetores int8 (lidos por HTTP Range) os reordenam;
-   ficam os 5 melhores trechos, no máximo 2 por documento.
+   ficam os 5 melhores trechos, no máximo 2 por documento. **Vaga para projetos e soluções:** eles viram poucos trechos
+   (192, contra 36.306 de publicações) e perdiam as vagas em temas amplos. Se nenhum dos 5 for projeto ou solução, o
+   melhor deles entra no lugar do 5º quando estiver a até 0,015 dele. No gabarito, o projeto/solução esperado passou a
+   estar entre as fontes em 19 de 20 perguntas (antes, 16), sem perder nenhum documento esperado.
 5. **Filtro de relação fraca:** se o melhor trecho tem cosseno abaixo de 0,852, a base não trata do assunto — a página
    diz que não encontrou, sem chamar o modelo, e oferece a busca em toda a Embrapa.
 6. **Geração:** modelo aberto no navegador (WebLLM), com as instruções de `site/prompt.txt`, os 5 trechos numerados e
