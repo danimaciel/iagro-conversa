@@ -30,6 +30,9 @@ NAO_SEI = re.compile(r"não encontrei", re.I)
 ap = argparse.ArgumentParser()
 ap.add_argument("--modelos", nargs="+", default=["qwen2.5:3b"])
 ap.add_argument("--n", type=int, default=0, help="só as n primeiras perguntas (0 = todas)")
+ap.add_argument("--threads", type=int, default=0, help="núcleos do processador para o Ollama (0 = todos)")
+ap.add_argument("--limiar", type=float, default=0.857,
+                help="abaixo deste cosseno do melhor trecho não chama o modelo (equivale a 0,852 na página, que usa o e5 q8)")
 args = ap.parse_args()
 
 docs = pd.read_parquet(DADOS / "documentos.parquet").set_index("codigo")
@@ -51,7 +54,10 @@ Q = m.encode(["query: " + p for p in g.pergunta], normalize_embeddings=True)
 
 
 def fontes(q):
-    ordem = np.argsort(-(V @ q))[:200]
+    s = V @ q
+    ordem = np.argsort(-s)[:200]
+    if s[ordem[0]] < args.limiar:  # como a página: relação fraca, não chama o modelo
+        return None
     por, out = {}, []
     for i in ordem:
         c = tr.codigo[i]
@@ -80,13 +86,17 @@ for modelo in args.modelos:
     linhas = []
     for (_, r), q in zip(g.iterrows(), Q):
         ids = fontes(q)
-        cods = [tr.codigo[i] for i in ids]
         esp = set(filter(None, r.docs_esperados.split(";")))
         t0 = time.time()
-        x = requests.post("http://localhost:11434/api/chat", timeout=900, json={
-            "model": modelo, "messages": prompt(r.pergunta, ids), "stream": False,
-            "options": {"temperature": 0.2, "num_predict": 450, "num_ctx": 4096}}).json()
-        resp = x["message"]["content"]
+        if ids is None:
+            cods, resp = [], "Não encontrei esse assunto nos documentos da Embrapa Territorial. (filtro de relação fraca)"
+        else:
+            cods = [tr.codigo[i] for i in ids]
+            x = requests.post("http://localhost:11434/api/chat", timeout=900, json={
+                "model": modelo, "messages": prompt(r.pergunta, ids), "stream": False,
+                "options": {"temperature": 0.2, "num_predict": 450, "num_ctx": 4096,
+                            **({"num_thread": args.threads} if args.threads else {})}}).json()
+            resp = x["message"]["content"]
         citados = {cods[int(k) - 1] for k in re.findall(r"\[(\d+)\]", resp) if 1 <= int(k) <= len(cods)}
         linhas.append({"id": r.id, "avaliacao": r.avaliacao, "pergunta": r.pergunta, "resposta": resp,
                        "fontes": ";".join(cods), "esperados": r.docs_esperados,

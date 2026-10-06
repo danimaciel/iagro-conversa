@@ -1,0 +1,145 @@
+id,avaliacao,pergunta,resposta,fontes,esperados,busca_trouxe,citou_esperado,citou_algo,nao_encontrei,segundos
+T01,T,Existe algum aplicativo que avisa sobre a ferrugem da soja no oeste da Bahia?,"Sim, o aplicativo MonitoraOeste avisa sobre a ferrugem da soja no Oeste da Bahia. Ele emite alertas sobre o avanço da ferrugem da soja e da mancha de ramulária do algodão em lavouras do Oeste da Bahia. [1][2][3][4][5] 
+",PUB 1166456;PUB 1185156;PUB 1185156;TEC 8709;PUB 1153157,TEC 8709;PRJ 217822;PUB 1166456;PUB 1153157;PUB 1185156,True,True,True,False,43.7
+T02,T,Onde encontro mapas e dados sobre a região do Matopiba?,"A plataforma GeoMatopiba disponibiliza mapas e dados sobre a região do Matopiba. Ela conta com dois pontos de entrada: o Geoweb Matopiba e os Painéis Interativos.  [1][2][3][4][5] 
+",PUB 1122591;TEC 6255;TEC 6575;PUB 1122591;PUB 1066071,TEC 6255;TEC 6575;PRJ 213904;PRJ 216398;PRJ 219986;PUB 1122591,True,True,True,False,42.9
+T03,T,Tem alguma plataforma com dados sobre a aquicultura no Brasil?,"Sim, a Embrapa possui a plataforma  ""SITE Aquicultura"", que reúne dados sobre a produção aquícola no Brasil, em uma única plataforma digital interativa com mapas estilizados.  Ela disponibiliza dados gerados por diversas instituições sobre o segmento, bem como sobre fatores que impactam toda atividade rural. [1] 
+ 
+ Essa plataforma, disponível gratuitamente online, preenche uma lacuna enfrentada ao longo de anos pelo setor: a ausência de informações organizadas para nortear investimentos, políticas públicas e outras ações. 
+",TEC 8729;PUB 1153161;PUB 1153161;TEC 8729;TEC 13842,TEC 8729;PRJ 222282;PUB 1168010,True,True,True,False,51.1
+T04,T,Como a Embrapa calcula o estoque de carbono em pomares de laranja?,"A Embrapa calcula o estoque de carbono em pomares de laranja usando a avaliação direta de árvores em campo e em laboratório, além de realizar a estimativa do indicador nas áreas de vegetação nativa e no solo.  O estudo é realizado em três fazendas de citros, localizadas nos municípios de Espírito Santo do Turvo, Iaras e Santa Cruz do Rio Pardo (Figura 4), na região centro-sudoeste do estado de São Paulo, Brasil.  [3] 
+ 
+  
+",TEC 13124;PUB 1173424;PUB 1173424;TEC 13124;PUB 884580,TEC 13124;PRJ 220947,True,False,True,False,48.4
+T05,T,Qual é a pegada de carbono do café robusta em Rondônia?,"A pegada de carbono do café robusta em Rondônia é satisfatória, principalmente devido à elevada produtividade, e contribui para a baixa emissão de gases de efeito estufa (GEE) em decorrência da intensa aplicação de mão de obra familiar nos principais manejos da cafeicultura e, consequentemente, da redução significativa da necessidade de maquinário agrícola que consome combustíveis fósseis. [1] 
+",PUB 1176034;PUB 1176034;TEC 13165;TEC 13165;PUB 1184291,TEC 13165;PRJ 221052;PUB 1176034,True,True,True,False,45.7
+T06,T,Existe algum painel com dados sobre a cadeia produtiva do trigo no Brasil?,"Sim, a plataforma Trigo no Brasil (Solução tecnológica, 2026) apresenta painéis de dados sobre diferentes elos da cadeia produtiva do trigo no Brasil. [1] 
+",TEC 13842;PUB 1082781;PUB 1032994;PUB 1033000;PUB 1032994,TEC 13842;PUB 1033002,True,True,True,False,43.5
+T07,T,Que sistema mostra a logística de exportação da soja e de outros produtos agropecuários?,"O Sistema de Inteligência Territorial Estratégica da Macrologística Agropecuária Brasileira, conhecido como SITE-MLog, mostra a logística de exportação da soja e de outros produtos agropecuários. Ele apresenta dados atuais e históricos sobre as principais cadeias produtivas de exportação agropecuária do país. [1] 
+",TEC 12230;PUB 1085461;PUB 1085461;PRJ 205597;PUB 1168007,TEC 12230;PRJ 215346;PUB 1168007;PUB 1053826,True,True,True,False,44.4
+T08,T,Onde posso baixar dados geoespaciais produzidos pela Embrapa?,"Os dados geoespaciais produzidos pela Embrapa podem ser baixados através do GeoInfo, a infraestrutura de dados espaciais da Embrapa.  [3] 
+",TEC 12223;PRJ 209099;PUB 1156897;PUB 1157804;PUB 1157804,TEC 12223;PRJ 209099;PRJ 207779;PRJ 203916,True,False,True,False,38.8
+T09,T,Como identificar pastagens degradadas usando imagens de satélite?,"Para identificar pastagens degradadas usando imagens de satélite, é possível utilizar a segmentação de imagens de satélite e a análise da reflectância espectral. A segmentação de imagens permite a identificação de pastagens em áreas definidas como pastagens no mapa das pastagens do Brasil, produzido pelo Laboratório de Processamento de Imagens e Geoprocessamento (Lapig) para o ano de 2021 (Lapig, 2021). A partir da segmentação, as métricas baseadas na estatística descritiva, como média, mediana, desvio-padrão, valores mínimo e máximo, amplitude, valores do primeiro e terceiro quartil, são extraídas para cada uma das seis bandas espectrais consideradas e dos nove índices calculados.  A partir daí, os dados são classificados usando seis classificadores distintos, utilizando o software Orange Data Mining, que utiliza bibliotecas em Python para o processamento. 
+
+[3][1][5] 
+",PUB 1162407;PUB 964492;PUB 1162407;PUB 1015323;PUB 988103,PRJ 37897;PRJ 215270;PRJ 26813;PRJ 221706;PUB 1014364;PUB 1162407;PUB 1037900;PUB 876227;PUB 964492,True,True,True,False,51.5
+T10,T,O que a Embrapa estudou sobre as áreas de vegetação nativa preservadas nos imóveis rurais a partir do CAR?,"A Embrapa estudou a dimensão territorial das áreas destinadas à preservação nativa em propriedades rurais do estado de Rondônia a partir do Cadastro Ambiental Rural (CAR).  A Embrapa Territorial utilizou os dados do CAR para quantificar as áreas de imóveis rurais que os proprietários declaram como destinadas à preservação da vegetação nativa.  A Embrapa também desenvolveu métodos e procedimentos cartográficos e numéricos para o tratamento dos dados do CAR, que possibilitaram a quantificação das áreas destinadas à preservação da vegetação nativa.  [2][3] 
+",PUB 1126206;PUB 1126420;PUB 1126420;PUB 1185285;PUB 1024773,TEC 6352;PRJ 217855;PRJ 217856;PRJ 216727;PUB 1126420;PUB 1184275;PUB 1081225,True,True,True,False,50.5
+T11,T,Existe um sistema com mapas e gráficos sobre a agropecuária na Caatinga?,"Sim, o Sistema de Inteligência Territorial Estratégica do Bioma Caatinga (SITE Caatinga) gera milhares de mapas e gráficos sobre a agropecuária na região.  [1] 
+",TEC 9297;TEC 9297;PUB 1126288;PUB 1137573;PUB 1152284,TEC 9297;PRJ 218045,True,True,True,False,33.8
+T12,T,Quais regiões do Brasil têm mais risco de entrada do fusário raça 4 tropical da bananeira?,"As regiões com maior risco de entrada do Fusarium oxysporum f.sp. cubense raça 4 tropical (Foc R4T) no Brasil são o Vale do Ribeira, SP, o Sul de Minas Gerais, o Vale do São Francisco, BA/PE, e o litoral norte de Santa Catarina.  [1] 
+",PUB 1183706;PUB 1183706;PUB 1070972;PUB 1070972;PUB 1059413,PUB 1183706,True,True,True,False,44.0
+T13,T,Como montar uma série temporal de NDVI com imagens Landsat?,"Para montar uma série temporal de NDVI com imagens Landsat, siga estes passos:
+
+1. **Busca de imagens no site EarthExplorer, vinculado ao United States Geological Survey (USGS):**  [1]
+2. **Elaboração de perfis temporais:**  [1]
+    * Empilhamento (layer stack) das imagens de interesse (NDVI, no caso deste trabalho);
+    * Geração de amostras aleatórias na área de interesse;
+    * Extração dos valores de NDVI das amostras geradas.
+3. **Utilização do software QGIS:** [2]
+    * Importação dos arquivos de imagem (raster) correspondentes às bandas NDVI da área de estudo.
+    * Após a conclusão desse processo, os arquivos ficam disponíveis em “Camadas” (Figura 19). 
+
+ 
+",PUB 1038034;PUB 1038034;PUB 31446;PUB 31446;PUB 662065,PUB 1038034,True,True,True,False,52.5
+T14,T,Tem algum atlas escolar sobre a agricultura da região de Campinas?,"Sim, o Atlas escolar da região metropolitana de Campinas foi organizado em dois volumes. [1][2][3][4][5] 
+ 
+ O Atlas escolar da Região Metropolitana de Campinas foi organizado em dois volumes. A versão digital está disponível na página da Empresa Brasileira de Pesquisa Agropecuária (Embrapa), em https://www.bdpa.cnptia.embrapa.br/consulta/ Acesse pelo celular. 
+ 
+  
+",PUB 1089948;PUB 1089948;PUB 1045755;PUB 988128;PUB 988128,PRJ 24452;PRJ 209587;PUB 1089948;PUB 921148;PUB 1045755;PUB 1108778,True,True,True,False,36.4
+T15,T,Como funciona a certificação orgânica participativa com formulários digitais?,"A certificação orgânica participativa utiliza formulários digitais para facilitar o preenchimento de informações, substituindo o preenchimento manual de centenas de campos. Essa ferramenta digital gera um banco de dados que pode ser utilizado por associações, cooperativas e organismos certificadores para melhorar a gestão da produção e dar visibilidade às suas práticas sustentáveis.  Além disso, a ferramenta digital possibilita a atualização periódica de informações, facilitando o processo de certificação. 
+
+[1][2] 
+",PRJ 221810;PRJ 221810;PUB 1177864;PRJ 219735;PUB 1108738,PRJ 219735;PRJ 221810,True,True,True,False,39.2
+T16,T,O que a Embrapa fez sobre desmatamento na Amazônia junto com o Censipam?,"A Embrapa, em parceria com o Censipam, desenvolveu um projeto para identificar, quantificar e qualificar processos de desmatamento na Amazônia. O projeto utiliza inteligência territorial estratégica para analisar padrões de desmatamento e focar em áreas com maior incidência de incêndios. A Embrapa utiliza métodos estatísticos e científicos, baseados em dados espaciais, imagens de satélite e inteligência territorial, para gerar informações sobre desmatamento, focos de calor e suas interações com o território amazônico. [1] 
+",PRJ 219978;PUB 1132103;PUB 1132103;PUB 1024773;PUB 1160599,PRJ 219978,True,True,True,False,46.0
+T17,T,Como aproveitar os resíduos de granjas no Paraná levando em conta a água disponível?,"O projeto ""Mapeamentos para a tomada de decisão quanto ao aproveitamento dos resíduos de granjas e planejamento de suas instalações conforme a disponibilidade hídrica no Paraná"" (Projeto, 2022) busca fornecer mapeamentos, levantamentos da disponibilidade hídrica das bacias hidrográficas nas principais regiões produtoras de avicultura, suinocultura e piscicultura no Paraná e indicações de tecnologias para o aproveitamento de resíduos. Os resultados permitirão aos beneficiários do Senar/PR e a outros associados de entidades na escala local, regional e estadual aprimorar a sustentabilidade de suas atividades, de maneira a garantir a competitividade do agronegócio paranaense no cenário nacional e internacional em consonância com a conservação ambiental. 
+
+[1] 
+",PRJ 220862;PUB 1183470;PUB 1096820;PUB 1157686;PUB 1157750,PRJ 220862,True,True,True,False,51.6
+T18,T,Existe um aplicativo com tecnologias da Embrapa para a agricultura na Amazônia?,"Sim, o aplicativo App TecAmazônia, desenvolvido pela Embrapa, oferece soluções tecnológicas para a agricultura sustentável no bioma Amazônia. Ele apresenta cultivares, práticas agropecuárias, processos agroindustriais, metodologias, entre outros tipos, e permite a busca por produtos, localização e acesso a materiais de apoio. [1] 
+",TEC 8586;TEC 8586;PUB 1132103;PUB 1157686;PUB 939076,TEC 8586,True,True,True,False,36.9
+T19,T,O que é o SomaBrasil?,"O SomaBrasil é um WebGis (Sistema de Informação Geográfica online) que disponibiliza bases de dados censitárias e informações geradas a partir de imagens de satélite para todo o Brasil, favorecendo a caracterização e análise de dados agropecuários e de conservação de recursos naturais. Ele reúne dados de recursos naturais e agricultura (como informações sobre a produção e o Censo Agropecuário do IBGE); dados gerados por programas do Instituto Brasileiro do Meio Ambiente e dos Recursos Naturais Renováveis (Ibama); dados do Instituto Nacional de Pesquisas Espaciais (Inpe), mapeamentos realizados pela Embrapa e outras instituições, além de informações sobre relevo, hidrografia, logística, áreas protegidas e potencial agrícola.  [2][3][4] 
+
+
+",PUB 939076;TEC 6389;PUB 939076;PRJ 205597;PUB 1014408,TEC 6389;PRJ 205597;PUB 1014408;PUB 939076;PUB 999439,True,True,True,False,40.5
+T20,T,Onde o percevejo-bronzeado do eucalipto pode causar mais problema no Brasil?,"O percevejo-bronzeado do eucalipto pode causar mais problemas no Brasil em áreas com Eucalyptus spp., principalmente em áreas com eucalipto em plantações, onde o percevejo se alimenta do eucalipto, causando danos.  [1] 
+",PUB 1126270;PUB 1068453;PUB 1162401;PUB 1094694;PUB 1015828,PUB 1059374;PUB 1126270;PUB 1068453,True,True,True,False,41.4
+P01,P,Quanto custa recuperar uma pastagem degradada por hectare?,"A recuperação de pastagens degradadas pode variar de acordo com a área e o tipo de degradação. O custo por hectare para a reposição de nutrientes, em média, varia entre R$ 5,91 para pastagens degradadas e R$ 17,74 para a cana-de-açúcar.  [4] 
+",PUB 946134;PRJ 37897;PUB 1162407;PUB 1085445;PUB 946143,PRJ 26813;PRJ 221873;PRJ 221706;PUB 1162407;PUB 1037900,True,False,True,False,46.3
+P02,P,Qual a dose de pó de rocha com potássio que devo usar na minha lavoura em Goiás?,"Não encontrei esse assunto nos documentos da Embrapa Territorial. 
+",PRJ 221292;PUB 17522;PUB 1112932;PUB 1154688;PUB 17522,PRJ 221292,True,False,False,True,40.6
+P03,P,Qual microrganismo usar para melhorar o aproveitamento de fósforo no feijão em São Paulo?,"O microrganismo que pode melhorar o aproveitamento de fósforo no feijão em São Paulo é o BiomaPhos®, um inoculante contendo microrganismos solubilizadores de P. [1] 
+",PRJ 221603;PUB 1168776;PRJ 221603;PUB 1185665;PUB 1172805,PRJ 221603,True,True,True,False,30.0
+X01,X,Qual a dose de vermífugo para bezerros?,"Não encontrei esse assunto nos documentos da Embrapa Territorial. 
+",PUB 985362;PUB 16794;PUB 17349;PUB 1133423;PUB 883888,,False,False,False,True,42.4
+X02,X,Como fazer enxertia em mangueira?,"A enxertia em mangueira pode ser realizada seguindo as técnicas descritas em [2] e [4].  
+
+**Explicação:**
+
+A enxertia é uma técnica de propagação vegetativa que consiste em remover uma parte da planta mãe para criar uma nova planta. Para realizar a enxertia em mangueira, é necessário remover uma parte da planta mãe, como um ramo, e colocá-la em um local onde possa se enraizar. 
+
+**Trechos utilizados:**
+
+[2] -  ""As técnicas existentes de propagação vegetativa e usualmente empregadas são várias para os diversos tipos de plantas: estaquia, miniestaquia, por rebentos, enraizamento, mergulhia, alporquia, enxertia (encostia, borbulhia, garfagem, sobreenxertia), cultura de tecidos (micropropagação), cultura de embrião, cultura meristemática, microgarfagem e divisão das touceiras. Para espécies arbóreas nativas faz-se uso, principalmente, das técnicas da estaquia, da alporquia e divisão das touceiras, e para exóticas arbóreas a estaquia.""
+
+[4] - ""Não há dúvida de que, retirados os fatores de degradação, essa floresta poderá cada vez mais incorporar elementos da flora nativa, via regeneração natural ou com pequena intensidade de manejo (enriquecimento). Assim como o eucalipto, no trecho oeste do Parque, onde foi realizado um plantio homogêneo de angicos (Anadenanthera colubrina), hoje já existe um subosque de espécies arbóreas nativas e exóticas em desenvolvimento (Figuras 1 e 6)."" 
+
+
+
+",PUB 31434;PUB 31434;PUB 946143;PUB 17133;PUB 17140,,False,False,True,False,94.7
+X03,X,Qual a melhor cultivar de milho para plantar no Paraná?,"A melhor cultivar de milho para plantar no Paraná não é especificamente mencionada nos trechos fornecidos. No entanto, podemos destacar que o Paraná é um dos principais produtores de milho no Brasil, e a demanda por fertilizantes é alta.  
+
+[5] 
+",PUB 1114032;PUB 985364;PUB 1173364;PUB 985364;PUB 1134414,,False,False,True,False,49.7
+X04,X,Como controlar a broca-do-café?,"A broca-do-café é um problema que afeta a qualidade e produtividade do café. Os agricultores enfrentam esse problema, o que leva a colher o produto ainda verde, prejudicando sua qualidade e produtividade. 
+
+[4] 
+ 
+",PUB 1173384;PUB 1173384;PUB 1041930;PUB 959646;PUB 959523,,False,False,True,False,57.0
+X05,X,Quanto calcário devo aplicar para corrigir o solo antes da soja?,"Para corrigir a acidez do solo, deve-se utilizar um elemento que libere ânion e forme um ácido fraco com o hidrogênio, e que forneça cálcio ou cálcio e magnésio para a planta. Os materiais empregados na correção da acidez do solo tropical (calcários) são encontrados na natureza em forma de rocha, que é moída e peneirada para ser aplicada ao solo. O calcário aplicado ao solo forma os íons Ca2+, Mg2+ e HCO3- (por solubilização e dissociação). 
+
+[2][3] 
+
+
+O calcário deve ser aplicado com tempo suficiente para reagir com o solo. A maioria dos calcários comercializados exige um período mínimo de três meses para reagir completamente. A Figura 1 mostra um experimento da reação de calcário em solo de Cerrado e a consequente elevação do pH com posterior estabilização, quarenta dias após a aplicação. Porém, o rápido efeito da reação do calcário neste experimento resultou das pequenas quantidades de solo e calcário envolvidas (facilitando a mistura) e ótimas condições de umidade. No campo, as condições ótimas são de difícil obtenção, por isso a estabilização do pH leva mais tempo para ocorrer. 
+
+
+Para corrigir a acidez do solo, deve-se utilizar um elemento que libere ânion e forme um ácido fraco com o hidrogênio, e que forneça cálcio ou cálcio e magnésio para a planta. Os materiais empregados na correção da acidez do solo tropical (calcários) são encontrados na natureza em forma de rocha, que é moída e peneirada para ser aplicada ao solo. O calcário aplicado ao solo forma os íons Ca2+, Mg2+ e HCO3- (por solubilização e dissociação). 
+
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+",PUB 1128267;PUB 1128267;PUB 882598;PUB 1112932;PUB 1124377,,False,False,True,False,94.3
+X06,X,Como fazer queijo minas artesanal?,"Não encontrei esse assunto nos documentos da Embrapa Territorial. 
+",PUB 1151714;PUB 964492;PUB 1103456;PUB 1116842;PUB 1177966,,False,False,False,True,39.7
+X07,X,Quero comprar mudas de eucalipto; onde encontro?,"As mudas de eucalipto podem ser encontradas em empresas que produzem eucalipto, como a Suzano do Brasil, localizada no município de Americana, SP.  [5] 
+",PUB 31434;PUB 31434;PUB 1016028;PUB 1015828;PUB 1094694,,False,False,True,False,35.8

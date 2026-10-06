@@ -152,6 +152,10 @@ const MODELOS_MLC = {  // sufixo do modelo na WebLLM conforme a placa aceita flo
 };
 const TIPOS = ["PUB", "TEC", "PRJ"], NOME_TIPO = {PUB: "Publicação", TEC: "Solução tecnológica", PRJ: "Projeto"};
 const N_FONTES = 5, CANDIDATOS = 200, MAX_POR_DOC = 2;
+// Abaixo deste cosseno (melhor trecho), a base não trata do assunto: não chama a IA.
+// Calibrado no gabarito da Embrapa Territorial com o modelo do navegador (q8): barra 8 de 11 perguntas
+// fora do tema e nenhuma das 26 com resposta (a menor delas: 0,859). Recalibrar ao incluir outras unidades.
+const LIMIAR = 0.852;
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
 const fmt = n => n.toLocaleString("pt-BR");
@@ -198,7 +202,9 @@ async function buscarTrechos(q) {
   // no máximo 2 trechos por documento, para variar as fontes
   const porDoc = new Map(), escolhidos = [];
   for (const i of cand) { const d = TR.d[i], n = porDoc.get(d) || 0; if (n >= MAX_POR_DOC) continue; porDoc.set(d, n + 1); escolhidos.push(i); if (escolhidos.length === N_FONTES) break; }
-  return Promise.all(escolhidos.map(async i => ({i, doc: DOCS[TR.d[i]], pagina: TR.p[i], texto: await textoTrecho(i), nota: nota.get(i)})));
+  const lista = await Promise.all(escolhidos.map(async i => ({i, doc: DOCS[TR.d[i]], pagina: TR.p[i], texto: await textoTrecho(i), nota: nota.get(i)})));
+  lista.fraca = nota.size > 0 && nota.get(cand[0]) < LIMIAR;
+  return lista;
 }
 async function textoTrecho(i) {
   const b = Math.floor(i / INFO.bloco);
@@ -260,7 +266,11 @@ async function perguntar(q) {
   const consulta = anterior && q.split(/\s+/).length <= 6 ? anterior + " " + q : q;
   const fontes = await buscarTrechos(consulta);
   const blocoFontes = `<details class="fontes" ${motor ? "" : "open"}><summary>Trechos usados (${fontes.length})</summary>${fontes.map((f, k) => cartaoFonte(f, k + 1, id)).join("")}</details>`;
-  if (!motor) {
+  if (fontes.fraca) {
+    const outra = "https://danimaciel.github.io/iagro-embrapa/#q=" + encodeURIComponent(q);
+    resp.innerHTML = `<p>Não encontrei esse assunto nos documentos da Embrapa Territorial. Os trechos abaixo são os mais próximos, mas a relação com a pergunta é fraca.</p><p><a href="${outra}" target="_blank" rel="noopener">Buscar essa pergunta em toda a Embrapa ↗</a></p>`;
+    caixa.insertAdjacentHTML("beforeend", blocoFontes.replace("<details class=\"fontes\" open>", "<details class=\"fontes\">").replace("<details class=\"fontes\" >", "<details class=\"fontes\">"));
+  } else if (!motor) {
     resp.innerHTML = `<p>Estes são os trechos mais relevantes que encontrei. Para receber uma resposta escrita a partir deles, ative a IA no topo da página.</p>`;
     caixa.insertAdjacentHTML("beforeend", blocoFontes);
   } else {
