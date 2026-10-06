@@ -13,6 +13,9 @@ Um RAG (*retrieval-augmented generation*) que roda inteiro no navegador:
    (192, contra 36.306 de publicações) e perdiam as vagas em temas amplos. Se nenhum dos 5 for projeto ou solução, o
    melhor deles entra no lugar do 5º quando estiver a até 0,015 dele. No gabarito, o projeto/solução esperado passou a
    estar entre as fontes em 19 de 20 perguntas (antes, 16), sem perder nenhum documento esperado.
+   **Quadro "Projetos e soluções relacionados":** além das fontes, cada resposta mostra até 3 projetos/soluções
+   da unidade cujo melhor trecho esteja a até 0,03 do melhor trecho geral (fora do que já está nas fontes).
+   Não vai para o modelo; serve para a pessoa ver o que a unidade fez sobre o tema.
 5. **Filtro de relação fraca:** se o melhor trecho tem cosseno abaixo de 0,852, a base não trata do assunto — a página
    diz que não encontrou, sem chamar o modelo, e oferece a busca em toda a Embrapa.
 6. **Geração:** modelo aberto no navegador (WebLLM), com as instruções de `site/prompt.txt`, os 5 trechos numerados e
