@@ -104,9 +104,8 @@ dialog button{font:600 14px Inter,sans-serif;border:0;border-radius:8px;backgrou
     <div class="painel" id="painel">
       <label for="modelo">IA para escrever a resposta:</label>
       <select id="modelo">
-        <option value="Qwen2.5-1.5B-Instruct">Leve · Qwen 2.5 1,5B (cerca de 1 GB)</option>
-        <option value="Qwen2.5-3B-Instruct" selected>Equilibrada · Qwen 2.5 3B (cerca de 2 GB)</option>
-        <option value="gemma-2-2b-it">Gemma 2 2B (cerca de 1,5 GB)</option>
+        <option value="gemma-2-2b-it" selected>Recomendada · Gemma 2 2B (cerca de 1,5 GB)</option>
+        <option value="Qwen2.5-3B-Instruct">Mais cautelosa · Qwen 2.5 3B (cerca de 2 GB)</option>
         <option value="Qwen2.5-7B-Instruct">Mais completa · Qwen 2.5 7B (cerca de 4,5 GB; precisa de placa de vídeo boa)</option>
       </select>
       <button id="ativar" type="button">Ativar IA</button>
@@ -208,15 +207,7 @@ async function textoTrecho(i) {
 }
 
 /* ---------- modelo de linguagem no navegador (WebLLM) */
-const REGRAS = `Você é o iAgro, assistente que responde dúvidas usando somente os TRECHOS fornecidos, tirados de publicações, soluções tecnológicas e projetos da Embrapa Territorial (unidade da Embrapa que trabalha com mapas, satélites, geotecnologias e inteligência territorial).
-Atende produtores rurais, extensionistas, estudantes, gestores públicos e técnicos.
-Regras:
-1. Use SOMENTE o que está nos trechos. Não invente números, datas, nomes, locais ou recomendações.
-2. Verifique se os trechos tratam mesmo do assunto da pergunta. Se nenhum trata, responda apenas: "Não encontrei esse assunto nos documentos da Embrapa Territorial." e não cite fontes.
-3. Se os trechos respondem só em parte, diga o que eles explicam e o que não cobrem.
-4. Linguagem simples, frases curtas, no máximo 150 palavras. Explique termos técnicos.
-5. Depois de cada informação, indique o número do trecho entre colchetes, por exemplo [1] ou [2][3].
-6. Responda em português do Brasil.`;
+let REGRAS = "";  // instruções do modelo: site/prompt.txt (as mesmas usadas na avaliação)
 
 async function ativarIA() {
   if (!navigator.gpu) { estado("estadoIA", "Este navegador não tem WebGPU, necessário para a IA local (use Chrome ou Edge atualizados, no computador). A busca de trechos continua funcionando.", false); return; }
@@ -277,7 +268,7 @@ async function perguntar(q) {
     const msgs = [{role: "system", content: REGRAS}];
     const ult = historico.at(-1);
     if (ult) msgs.push({role: "user", content: ult.q}, {role: "assistant", content: ult.r});
-    msgs.push({role: "user", content: `TRECHOS:\n\n${contexto}\n\nPERGUNTA: ${q}`});
+    msgs.push({role: "user", content: `TRECHOS:\n\n${contexto}\n\nPERGUNTA: ${q}\n\nResponda à pergunta usando os trechos acima e indique o número de cada trecho usado, como [1].`});
     resp.innerHTML = `<span class="cursor"></span>`;
     caixa.insertAdjacentHTML("beforeend", blocoFontes);
     let texto = "";
@@ -306,6 +297,7 @@ async function iniciar() {
     fetch("dados/info.json").then(r => r.json()), fetch("dados/docs.json").then(r => r.json()),
     fetch("dados/trechos.json").then(r => r.json()), fetch("dados/bits.bin").then(r => r.arrayBuffer()),
   ]);
+  REGRAS = await fetch("prompt.txt").then(r => r.text());
   INFO = info; DOCS = docs; TR = tr; BITS = new Uint8Array(bits); N = info.n;
   $("sobreDados").textContent = `Base: ${fmt(info.documentos)} documentos da ${info.unidades.join(", ")} (${fmt(info.publicacoes)} publicações, ${fmt(info.solucoes)} soluções, ${fmt(info.projetos)} projetos), ${fmt(info.com_texto_completo)} com texto completo, divididos em ${fmt(info.n)} trechos. Exportação do Redape de ${info.exportacao}.`;
   estado("estadoBusca", "Preparando a busca por significado (cerca de 110 MB, só na primeira visita)…", false);
