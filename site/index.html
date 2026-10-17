@@ -92,6 +92,12 @@ body.com-selecao main.wrap{padding-bottom:250px}
 .selecao .acoes{display:flex;flex-wrap:wrap;gap:6px;margin-left:auto}
 .selecao button,.selecao a{font:500 13px Inter,sans-serif;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:6px 10px;cursor:pointer;text-decoration:none}
 .selecao button.forte{background:var(--green-700);border-color:var(--green-700);color:#fff}
+.filtrosC{display:flex;flex-wrap:wrap;gap:8px;flex-basis:100%}
+.filtrosC select{font:inherit;font-size:14px;border-radius:8px;border:1px solid #ffffff44;background:#ffffff14;color:var(--hero-ink);padding:6px 8px;max-width:260px}
+.filtrosC select option,.filtrosC select optgroup{color:#17251d}
+.etq{display:inline-block;font-size:11.5px;border-radius:99px;padding:1px 7px;background:var(--bg);border:1px solid var(--line);color:var(--ink);margin:0 3px 2px 0;cursor:pointer}
+.etq.prod{border-color:#3f9a5c66} .etq.uf{border-color:#2f6f9f55} .etq.bio{border-color:#c8892a66}
+.onde{font-size:13px;color:var(--muted);margin:4px 0 10px}
 .rotulo{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px}
 .rapida{margin:0 0 10px;padding-left:18px}
 .rapida li{margin:0 0 6px}
@@ -138,6 +144,10 @@ dialog button{font:600 14px Inter,sans-serif;border:0;border-radius:8px;backgrou
         <option value="Qwen2.5-7B-Instruct">Mais completa · Qwen 2.5 7B (cerca de 4,5 GB; precisa de placa de vídeo boa)</option>
       </select>
       <div class="estado" id="estadoIA"><span class="ponto"></span><span id="estadoIATxt">Toda pergunta recebe uma resposta rápida, com as frases dos documentos. A IA escreve um texto só quando você pede, em cada resposta; na primeira vez, o modelo é baixado e fica guardado no navegador.</span></div>
+      <div class="filtrosC" id="filtrosC" hidden>
+        <select id="fProduto" aria-label="Restringir a um produto"><option value="">Todos os produtos</option></select>
+        <select id="fEstado" aria-label="Restringir a um estado"><option value="">Todos os estados</option></select>
+      </div>
       <div class="estado" id="estadoBusca"><span class="ponto"></span><span id="estadoBuscaTxt">Carregando a base…</span></div>
     </div>
   </div>
@@ -233,8 +243,12 @@ async function buscarTrechos(q) {
   const tab = new Float32Array(B * 256);
   for (let j = 0; j < B; j++) for (let x = 0; x < 256; x++) { let s = 0; for (let k = 0; k < 8; k++) s += (x & (128 >> k)) ? qc[j * 8 + k] : -qc[j * 8 + k]; tab[j * 256 + x] = s; }
   const s = new Float32Array(N);
-  for (let i = 0; i < N; i++) { let acc = 0; const o = i * B; for (let j = 0; j < B; j++) acc += tab[j * 256 + BITS[o + j]]; s[i] = acc; }
-  const cand = [...s.keys()].sort((a, b) => s[b] - s[a]).slice(0, CANDIDATOS);
+  for (let i = 0; i < N; i++) {
+    if (!passaDoc(DOCS[TR.d[i]])) { s[i] = -Infinity; continue; }
+    let acc = 0; const o = i * B; for (let j = 0; j < B; j++) acc += tab[j * 256 + BITS[o + j]]; s[i] = acc;
+  }
+  const cand = [...s.keys()].filter(i => s[i] !== -Infinity).sort((a, b) => s[b] - s[a]).slice(0, CANDIDATOS);
+  if (!cand.length) { const vazia = []; vazia.fraca = true; vazia.relacionados = []; vazia.semFiltro = true; return vazia; }
   // reordena com o vetor completo, lendo só as linhas dos candidatos
   const L = INFO.linhas_vet, f = INFO.escala / 127, nota = new Map(), grupos = [];
   const todos = [...new Set([...cand, ...PT])];
@@ -253,14 +267,14 @@ async function buscarTrechos(q) {
   const porDoc = new Map(), escolhidos = [];
   for (const i of cand) { const d = TR.d[i], n = porDoc.get(d) || 0; if (n >= MAX_POR_DOC) continue; porDoc.set(d, n + 1); escolhidos.push(i); if (escolhidos.length === N_FONTES) break; }
   if (nota.size && escolhidos.length === N_FONTES && !escolhidos.some(i => DOCS[TR.d[i]].k > 0)) {
-    let melhor = -1; for (const i of PT) if (nota.has(i) && (melhor < 0 || nota.get(i) > nota.get(melhor))) melhor = i;
+    let melhor = -1; for (const i of PT) if (nota.has(i) && passaDoc(DOCS[TR.d[i]]) && (melhor < 0 || nota.get(i) > nota.get(melhor))) melhor = i;
     if (melhor >= 0 && nota.get(melhor) >= nota.get(escolhidos.at(-1)) - MARGEM_PRJ_TEC) escolhidos[N_FONTES - 1] = melhor;
   }
   const lista = await Promise.all(escolhidos.map(async i => ({i, doc: DOCS[TR.d[i]], pagina: TR.p[i], texto: await textoTrecho(i), nota: nota.get(i)})));
   lista.fraca = nota.size > 0 && nota.get(cand[0]) < LIMIAR;
   // projetos e soluções relacionados: melhor trecho de cada um, perto do melhor trecho geral
   const usados = new Set(escolhidos.map(i => TR.d[i])), porDocPT = new Map();
-  for (const i of PT) if (nota.has(i) && !usados.has(TR.d[i]) && (!porDocPT.has(TR.d[i]) || nota.get(i) > porDocPT.get(TR.d[i]))) porDocPT.set(TR.d[i], nota.get(i));
+  for (const i of PT) if (nota.has(i) && passaDoc(DOCS[TR.d[i]]) && !usados.has(TR.d[i]) && (!porDocPT.has(TR.d[i]) || nota.get(i) > porDocPT.get(TR.d[i]))) porDocPT.set(TR.d[i], nota.get(i));
   const corte = nota.size ? nota.get(cand[0]) - MARGEM_RELACIONADOS : Infinity;
   lista.relacionados = [...porDocPT.entries()].filter(([, s]) => s >= corte).sort((a, b) => b[1] - a[1]).slice(0, N_RELACIONADOS).map(([d]) => DOCS[d]);
   return lista;
@@ -313,6 +327,38 @@ $("modelo").addEventListener("change", async () => {
   if (motor && modeloCarregado !== $("modelo").value) { try { await motor.unload(); } catch (e) { /* segue */ } motor = null; modeloCarregado = null; }
 });
 
+/* ---------- produtos e localização (do Observatório de Pesquisa da Embrapa) */
+let fP = "", fE = "";
+const passaDoc = d => (!fP || (d.pp || []).includes(fP)) && (!fE || (d.uf || []).includes(fE));
+const nomeProd = id => INFO.produtos?.[id]?.nome || id;
+function etiquetasDoc(d) {
+  const pr = (d.pp || []).slice(0, 3).map(id => `<span class="etq prod" data-fp="${esc(id)}" title="Restringir a ${esc(nomeProd(id))}">${esc(nomeProd(id))}</span>`);
+  const uf = (d.uf || []).slice(0, 4).map(u => `<span class="etq uf" data-fe="${u}" title="Restringir a ${u}">${u}</span>`);
+  const bi = (d.bi || []).slice(0, 2).map(b => `<span class="etq bio">${esc(b)}</span>`);
+  return [...pr, ...uf, ...bi].join("");
+}
+function ondeEoQue(fontes) {
+  const cp = new Map(), cu = new Map();
+  fontes.forEach(f => { (f.doc.pp || []).forEach(x => cp.set(x, (cp.get(x) || 0) + 1)); (f.doc.uf || []).forEach(x => cu.set(x, (cu.get(x) || 0) + 1)); });
+  const ord = m => [...m.entries()].sort((a, b) => b[1] - a[1]).map(([k]) => k);
+  const p = ord(cp).slice(0, 5), u = ord(cu).slice(0, 6);
+  if (!p.length && !u.length) return "";
+  return `<div class="onde">${p.length ? `<b>Produtos:</b> ${p.map(x => `<span class="etq prod" data-fp="${esc(x)}">${esc(nomeProd(x))}</span>`).join("")}` : ""}
+    ${u.length ? ` <b>Onde:</b> ${u.map(x => `<span class="etq uf" data-fe="${x}">${x}</span>`).join("")}` : ""}</div>`;
+}
+function aplicarFiltroC(qual, valor) {
+  if (qual === "p") { fP = valor; $("fProduto").value = valor; } else { fE = valor; $("fEstado").value = valor; }
+  const desc = [fP && nomeProd(fP), fE].filter(Boolean).join(" · ");
+  estado("estadoBusca", `Busca pronta: ${fmt(INFO.documentos)} documentos, ${fmt(INFO.n)} trechos${desc ? ` · restrita a ${desc}` : ""}.`, true);
+}
+$("fProduto").addEventListener("change", e => aplicarFiltroC("p", e.target.value));
+$("fEstado").addEventListener("change", e => aplicarFiltroC("e", e.target.value));
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-fp],[data-fe]"); if (!t) return;
+  if (t.dataset.fp !== undefined) aplicarFiltroC("p", t.dataset.fp); else aplicarFiltroC("e", t.dataset.fe);
+  window.scrollTo({top: 0, behavior: "smooth"});
+});
+
 /* ---------- conversa */
 function citacoes(texto, n) {
   return esc(texto).replace(/\[(\d+)\]/g, (m, k) => +k >= 1 && +k <= n ? `<a class="cit" href="#f-${n}-${k}">${k}</a>` : m)
@@ -324,6 +370,7 @@ function cartaoFonte(f, k, id) {
   return `<div class="fonte ${t}" id="f-${id}-${k}">
     <div class="topo"><b>[${k}]</b><span>${NOME_TIPO[t]}</span><span>${esc(d.a || "")}</span><span>${esc(d.d)}</span><span>${onde}</span>${caixaSel("d:" + d.c, d.c)}</div>
     <h4>${esc(d.t)}</h4>
+    ${etiquetasDoc(d) ? `<div>${etiquetasDoc(d)}</div>` : ""}
     <blockquote>${esc(f.texto.length > 600 ? f.texto.slice(0, 600).replace(/\s\S*$/, "") + "…" : f.texto)}</blockquote>
     <div class="links"><a href="${esc(d.l)}" target="_blank" rel="noopener">Ver no Portal Embrapa ↗</a>${pdf}${d.o ? `<a href="${esc(/^https?:/.test(d.o) ? d.o : "https://" + d.o)}" target="_blank" rel="noopener">Acessar a solução ↗</a>` : ""}${d.au ? `<span style="color:var(--muted)">${esc(d.au)}</span>` : ""}</div>
   </div>`;
@@ -333,7 +380,7 @@ function quadroRelacionados(rel) {
   if (!rel?.length) return "";
   return `<div class="rel"><h5>Projetos e soluções relacionados</h5>${rel.map(d => {
     const t = TIPOS[d.k];
-    return `<div class="item ${t}">${caixaSel("d:" + d.c, d.c)}<b>${t === "PRJ" ? "Projeto" : "Solução"}</b><a href="${esc(d.l)}" target="_blank" rel="noopener">${esc(d.t)}</a> <small>· ${esc(d.d)}</small>${d.o ? ` · <a href="${esc(/^https?:/.test(d.o) ? d.o : "https://" + d.o)}" target="_blank" rel="noopener">Acessar ↗</a>` : ""}</div>`;
+    return `<div class="item ${t}">${caixaSel("d:" + d.c, d.c)}<b>${t === "PRJ" ? "Projeto" : "Solução"}</b><a href="${esc(d.l)}" target="_blank" rel="noopener">${esc(d.t)}</a> <small>· ${esc(d.d)}</small> ${etiquetasDoc(d)}${d.o ? ` · <a href="${esc(/^https?:/.test(d.o) ? d.o : "https://" + d.o)}" target="_blank" rel="noopener">Acessar ↗</a>` : ""}</div>`;
   }).join("")}</div>`;
 }
 
@@ -439,7 +486,9 @@ async function perguntar(q) {
   const fontes = await buscarTrechos(consulta);
   if (!valendo()) return;
   const blocoFontes = `<details class="fontes"><summary>Trechos usados (${fontes.length})</summary>${fontes.map((f, k) => cartaoFonte(f, k + 1, id)).join("")}</details>`;
-  if (fontes.fraca) {
+  if (fontes.semFiltro) {
+    resp.innerHTML = `<p>Nenhum documento atende aos filtros escolhidos (${esc([fP && nomeProd(fP), fE].filter(Boolean).join(" · "))}). Tire os filtros no topo da página e pergunte de novo.</p>`;
+  } else if (fontes.fraca) {
     const outra = "https://danimaciel.github.io/iagro-embrapa/#q=" + encodeURIComponent(q);
     resp.innerHTML = `<p>Não encontrei esse assunto nos documentos da Embrapa Territorial. Os trechos abaixo são os mais próximos, mas a relação com a pergunta é fraca.</p><p><a href="${outra}" target="_blank" rel="noopener">Buscar essa pergunta em toda a Embrapa ↗</a></p>`;
     caixa.insertAdjacentHTML("beforeend", blocoFontes);
@@ -449,7 +498,7 @@ async function perguntar(q) {
     const lista = rap.itens.length
       ? `<p class="rotulo">Resposta rápida · frases dos documentos mais próximas da sua pergunta</p><ul class="rapida">${rap.itens.map(f => `<li>${esc(f.x)} <a class="cit" href="#f-${id}-${f.k + 1}">${f.k + 1}</a></li>`).join("")}</ul>`
       : `<p>Estes são os trechos mais relevantes que encontrei.</p>`;
-    resp.innerHTML = lista + `<button type="button" class="escreverIA" data-id="${id}">Escrever resposta com IA</button>
+    resp.innerHTML = lista + ondeEoQue(fontes) + `<button type="button" class="escreverIA" data-id="${id}">Escrever resposta com IA</button>
       <div class="medida">A IA lê os trechos e escreve um texto citando as fontes. Roda no seu computador e pode levar até 1 minuto.</div>
       ${caixaSel("r:" + id, null, "Selecionar esta resposta")}`;
     const textoRapido = rap.itens.map(f => `${f.x} [${f.k + 1}]`).join(" ");
@@ -541,6 +590,15 @@ async function iniciar() {
   REGRAS = await fetch("prompt.txt").then(r => r.text());
   INFO = info; DOCS = docs; TR = tr; BITS = new Uint8Array(bits); N = info.n;
   PT = [...TR.d.keys()].filter(i => DOCS[TR.d[i]].k > 0);
+  if (INFO.produtos && Object.keys(INFO.produtos).length) {
+    const cont = new Map(), contUf = new Map();
+    DOCS.forEach(d => { (d.pp || []).forEach(x => cont.set(x, (cont.get(x) || 0) + 1)); (d.uf || []).forEach(x => contUf.set(x, (contUf.get(x) || 0) + 1)); });
+    const cats = {}; Object.entries(INFO.produtos).forEach(([id, p]) => (cats[p.cat] ||= []).push([id, p]));
+    $("fProduto").insertAdjacentHTML("beforeend", Object.entries(cats).sort((a, b) => a[0].localeCompare(b[0], "pt-BR")).map(([c, ps]) =>
+      `<optgroup label="${esc(c)}">${ps.sort((a, b) => (cont.get(b[0]) || 0) - (cont.get(a[0]) || 0)).map(([id, p]) => `<option value="${esc(id)}">${esc(p.nome)} (${cont.get(id) || 0})</option>`).join("")}</optgroup>`).join(""));
+    $("fEstado").insertAdjacentHTML("beforeend", [...contUf.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([u, n]) => `<option value="${u}">${u} (${n})</option>`).join(""));
+    $("filtrosC").hidden = false;
+  }
   $("sobreDados").textContent = `Base: ${fmt(info.documentos)} documentos da ${info.unidades.join(", ")} (${fmt(info.publicacoes)} publicações, ${fmt(info.solucoes)} soluções, ${fmt(info.projetos)} projetos), ${fmt(info.com_texto_completo)} com texto completo, divididos em ${fmt(info.n)} trechos. Exportação do Redape de ${info.exportacao}.`;
   estado("estadoBusca", "Preparando a busca por significado (cerca de 110 MB, só na primeira visita)…", false);
   const {pipeline, env} = await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1");

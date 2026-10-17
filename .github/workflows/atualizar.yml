@@ -169,6 +169,17 @@ jobs:
           gh release download "$CACHE_TAG" -D dados/cache -p 'e5*' || true
           python pipeline/vetores.py juntar
           gh release upload "$CACHE_TAG" dados/cache/e5.npy dados/cache/e5_hash.parquet --clobber
+      - name: Produtos e localização (Observatório de Pesquisa da Embrapa)
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          TAG=$(gh release list --repo danimaciel/observatorio_embrapa --limit 50 --json tagName -q '.[].tagName' | grep '^enriquecimento-' | sort | tail -n 1 || true)
+          if [ -n "$TAG" ]; then
+            mkdir -p dados/enriquecimento
+            gh release download "$TAG" --repo danimaciel/observatorio_embrapa -D dados/enriquecimento --clobber
+            echo "enriquecimento: $TAG"
+          else
+            echo "sem release de enriquecimento no Observatório"
+          fi
       - run: python pipeline/site_dados.py ${{ needs.preparar.outputs.mes }}
       - name: Guardar os dados da página (para publicar só a página depois, em 1 a 2 minutos)
         env: { GH_TOKEN: "${{ github.token }}" }

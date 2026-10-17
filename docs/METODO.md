@@ -76,3 +76,14 @@ Decisões:
   num trecho como se fosse fornecedora.
 
 As planilhas de cada versão estão em `avaliacao/` (`v1/`, `v2_sem_filtro/` e a atual).
+
+
+## Produtos e localização (desde 17/10/2026)
+
+Os produtos agropecuários e os lugares de cada documento vêm do Observatório de Pesquisa da Embrapa (release pública
+`enriquecimento-AAAA-MM` em danimaciel/observatorio_embrapa, baixada pelo fluxo antes de gerar os dados da página).
+Taxonomia de produtos com base nas categorias oficiais do IBGE (PAM, PPM, PEVS); só produtos de força **principal**
+(título ou palavras-chave). Estados citados no texto ou deduzidos do município citado. Na página: filtros por produto e
+estado no painel (restringem a busca dos trechos), etiquetas nas fontes e nos projetos relacionados, e uma linha
+"Produtos / Onde" com os produtos e estados dos documentos encontrados. Na base da Territorial (2.137 documentos),
+514 têm produto principal e 1.002 têm estado (marcações provisórias de setembro de 2026).
