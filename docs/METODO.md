@@ -18,7 +18,19 @@ Um RAG (*retrieval-augmented generation*) que roda inteiro no navegador:
    Não vai para o modelo; serve para a pessoa ver o que a unidade fez sobre o tema.
 5. **Filtro de relação fraca:** se o melhor trecho tem cosseno abaixo de 0,852, a base não trata do assunto — a página
    diz que não encontrou, sem chamar o modelo, e oferece a busca em toda a Embrapa.
-6. **Geração:** modelo aberto no navegador (WebLLM), com as instruções de `site/prompt.txt`, os 5 trechos numerados e
+6. **Resposta rápida (padrão, sem IA; desde 17/10/2026):** os 3 melhores trechos são divididos em frases; uma
+   pré-seleção por palavras em comum com a pergunta deixa as 5 melhores de cada trecho; o mesmo modelo e5 compara
+   essas frases à pergunta e mostra as 4 mais próximas (no máximo 2 por trecho, sem repetir frase), com a citação.
+   Leva poucos segundos, não usa a placa de vídeo e não tem como inventar: é texto dos documentos.
+7. **Resposta escrita pela IA (sob demanda):** botão "Escrever resposta com IA" em cada resposta. O modelo é carregado
+   no primeiro pedido (sem carregamento automático ao abrir a página), roda num Web Worker, com janela de 2.048 tokens e
+   até 250 tokens de resposta. Recebe só as 3 frases mais relevantes de cada um dos 3 melhores trechos (leitura de
+   2 a 3 vezes menor que os 5 trechos inteiros). Ao terminar, mostra o tempo e a velocidade de leitura e escrita;
+   se a escrita ficar abaixo de 4 tokens/s, sugere o modelo leve.
+
+   *Motivo:* no notebook da usuária (placa de vídeo integrada), a geração automática a cada pergunta travava a página
+   e levava dezenas de segundos só para a IA ler os trechos.
+8. **Geração (versão anterior, até 17/10/2026):** modelo aberto no navegador (WebLLM), com as instruções de `site/prompt.txt`, os 5 trechos numerados e
    a pergunta. A resposta cita [1], [2]...; cada citação leva ao trecho, ao Portal e ao PDF na página.
 
 ## Base (exportação de outubro de 2026)

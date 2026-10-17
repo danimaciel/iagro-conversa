@@ -92,6 +92,13 @@ body.com-selecao main.wrap{padding-bottom:250px}
 .selecao .acoes{display:flex;flex-wrap:wrap;gap:6px;margin-left:auto}
 .selecao button,.selecao a{font:500 13px Inter,sans-serif;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:6px 10px;cursor:pointer;text-decoration:none}
 .selecao button.forte{background:var(--green-700);border-color:var(--green-700);color:#fff}
+.rotulo{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px}
+.rapida{margin:0 0 10px;padding-left:18px}
+.rapida li{margin:0 0 6px}
+.escreverIA{font:600 14px Inter,sans-serif;border:0;border-radius:8px;background:var(--amber);color:#1b1206;padding:8px 12px;cursor:pointer}
+.escreverIA:disabled{opacity:.7;cursor:default}
+.textoIA{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+.medida{font-size:12px;color:var(--muted);margin-top:6px}
 .cursor::after{content:"▍";animation:pisca 1s infinite;color:var(--green-500)}
 @keyframes pisca{50%{opacity:0}}
 .entrada{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(transparent, var(--bg) 30%);padding:24px 0 14px}
@@ -130,8 +137,7 @@ dialog button{font:600 14px Inter,sans-serif;border:0;border-radius:8px;backgrou
         <option value="Qwen2.5-3B-Instruct">Mais cautelosa · Qwen 2.5 3B (cerca de 2 GB)</option>
         <option value="Qwen2.5-7B-Instruct">Mais completa · Qwen 2.5 7B (cerca de 4,5 GB; precisa de placa de vídeo boa)</option>
       </select>
-      <button id="ativar" type="button">Ativar IA</button>
-      <div class="estado" id="estadoIA"><span class="ponto"></span><span id="estadoIATxt">A IA é opcional e baixada só uma vez, para o seu navegador. Sem ela, você vê os trechos encontrados.</span></div>
+      <div class="estado" id="estadoIA"><span class="ponto"></span><span id="estadoIATxt">Toda pergunta recebe uma resposta rápida, com as frases dos documentos. A IA escreve um texto só quando você pede, em cada resposta; na primeira vez, o modelo é baixado e fica guardado no navegador.</span></div>
       <div class="estado" id="estadoBusca"><span class="ponto"></span><span id="estadoBuscaTxt">Carregando a base…</span></div>
     </div>
   </div>
@@ -276,7 +282,7 @@ async function ativarIA() {
   if (!temF16 && $("modelo").selectedOptions[0].dataset.soF16) { estado("estadoIA", "Este aparelho não suporta o modelo leve (Gemma 3). Escolha outro modelo ou use só a busca.", false); return; }
   const sufixo = temF16 ? MODELOS_MLC.f16 : MODELOS_MLC.f32;
   const id = $("modelo").value + sufixo;
-  $("ativar").disabled = true; $("modelo").disabled = true;
+  $("modelo").disabled = true;
   try {
     const webllm = await import("https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.85/+esm");
     // IndexedDB guarda melhor arquivos grandes que o cache padrão (que às vezes recusa e faz baixar de novo);
@@ -289,30 +295,23 @@ async function ativarIA() {
     // A IA roda num Web Worker: a página não trava enquanto ela trabalha
     motor = await webllm.CreateWebWorkerMLCEngine(new Worker(new URL("ia-worker.js", import.meta.url), {type: "module"}), id, {
       appConfig,
-      initProgressCallback: p => estado("estadoIA", `${acao}: ${Math.round((p.progress || 0) * 100)}%`, false),
-    });
+      initProgressCallback: p => { estado("estadoIA", `${acao}: ${Math.round((p.progress || 0) * 100)}%`, false); aoProgresso(p); },
+    }, {context_window_size: 2048});  // memória menor: menos uso da placa de vídeo
     estado("estadoIA", `IA pronta (${$("modelo").selectedOptions[0].text.split("(")[0].trim()}). Ela roda no seu computador${guardada ? "" : " e fica guardada para as próximas visitas"}.`, true);
-    $("ativar").textContent = "IA ativa";
-    try { localStorage.setItem("iagro-modelo", $("modelo").value); } catch (e) { /* sem armazenamento local */ }
+    $("modelo").disabled = false;
+    modeloCarregado = $("modelo").value;
+    return true;
   } catch (e) {
-    console.error(e); motor = null; $("ativar").disabled = false; $("modelo").disabled = false;
-    estado("estadoIA", "Não foi possível carregar a IA neste aparelho (provavelmente falta memória de vídeo). Tente o modelo leve, para celular. A busca de trechos continua funcionando.", false);
+    console.error(e); motor = null; $("modelo").disabled = false;
+    estado("estadoIA", "Não foi possível carregar a IA neste aparelho (provavelmente falta memória de vídeo). Tente o modelo leve, para celular. As respostas rápidas continuam funcionando.", false);
+    return false;
   }
 }
-$("ativar").addEventListener("click", ativarIA);
-// Quem já ativou a IA: escolhe o mesmo modelo e ativa sozinho se ele estiver guardado no navegador
-async function reativarIA() {
-  let salvo = null;
-  try { salvo = localStorage.getItem("iagro-modelo"); } catch (e) { return; }
-  if (!salvo || !navigator.gpu || ![...$("modelo").options].some(o => o.value === salvo)) return;
-  $("modelo").value = salvo;
-  try {
-    const webllm = await import("https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.85/+esm");
-    const adaptador = await navigator.gpu.requestAdapter();
-    const id = salvo + (adaptador?.features.has("shader-f16") ? MODELOS_MLC.f16 : MODELOS_MLC.f32);
-    if (await webllm.hasModelInCache(id, {...webllm.prebuiltAppConfig, cacheBackend: "indexeddb"})) ativarIA();
-  } catch (e) { /* segue sem IA; a pessoa pode ativar pelo botão */ }
-}
+let modeloCarregado = null, aoProgresso = () => {};
+// trocou o modelo: descarrega o atual; o novo é carregado no próximo pedido
+$("modelo").addEventListener("change", async () => {
+  if (motor && modeloCarregado !== $("modelo").value) { try { await motor.unload(); } catch (e) { /* segue */ } motor = null; modeloCarregado = null; }
+});
 
 /* ---------- conversa */
 function citacoes(texto, n) {
@@ -389,7 +388,43 @@ $("selCopiar").addEventListener("click", async () => {
 $("selCompartilhar").addEventListener("click", () => navigator.share({title: "Documentos da Embrapa Territorial (iAgro)", text: textoSelecao()}).catch(() => {}));
 $("selLimpar").addEventListener("click", () => { SEL.clear(); atualizarSelecao(); });
 
-let nMsg = 0;
+/* ---------- resposta rápida: as frases dos trechos mais próximas da pergunta (sem IA) */
+const FRASE = /(?<=[.!?])\s+(?=[A-ZÀ-Ú0-9("“])/;
+const semAcento = t => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const PARADAS_R = new Set("a o as os de da do das dos e em no na nos nas um uma para por com sem que qual quais como onde tem existe sobre ao aos se sua seu ou mais menos ser sao foi pode podem esta este essa esse isso".split(" "));
+const palavras = t => new Set((semAcento(t).match(/[a-z0-9]+/g) || []).filter(w => w.length > 3 && !PARADAS_R.has(w)));
+async function respostaRapida(q, fontes) {
+  const usar = fontes.slice(0, 3), frases = [], pq = palavras(q);
+  usar.forEach((f, k) => {
+    const cand = f.texto.split(FRASE).map(x => x.trim().replace(/^\d{1,4}\s+(?=[A-ZÀ-Ú])/, "").replace(/^(resumo|abstract)\s*:\s*/i, ""))
+      .filter(x => x.length >= 40 && x.length <= 450 && !/\.{3}|…/.test(x))
+      .map((x, ordem) => ({k, x, ordem, lex: [...palavras(x)].filter(w => pq.has(w)).length}));
+    // pré-seleção barata por palavras em comum: só as 5 melhores de cada trecho vão para o modelo de significado
+    cand.sort((a, b) => b.lex - a.lex || a.ordem - b.ordem).slice(0, 5).forEach(c => frases.push(c));
+  });
+  if (!frases.length) return {itens: [], contexto: usar.map(f => f.texto)};
+  const vq = (await extrator("query: " + q, {pooling: "mean", normalize: true})).data;
+  const vs = await extrator(frases.map(f => "passage: " + f.x), {pooling: "mean", normalize: true});
+  const D = vs.dims[1], dados = vs.data;
+  frases.forEach((f, i) => { let c = 0; for (let j = 0; j < D; j++) c += vq[j] * dados[i * D + j]; f.nota = c; });
+  const ordenadas = [...frases].sort((a, b) => b.nota - a.nota), porTrecho = new Map(), itens = [];
+  const vistas = new Set();  // a mesma frase em registros diferentes da mesma publicação aparece uma vez só
+  for (const f of ordenadas) {
+    const chave = semAcento(f.x).replace(/[^a-z0-9]+/g, " ").trim().slice(0, 120);
+    const n = porTrecho.get(f.k) || 0; if (n >= 2 || vistas.has(chave)) continue;
+    vistas.add(chave); porTrecho.set(f.k, n + 1); itens.push(f); if (itens.length === 4) break;
+  }
+  // para a IA: de cada trecho, as 3 frases mais relevantes, na ordem do texto (leitura bem menor)
+  const contexto = usar.map((f, k) => {
+    const doTrecho = frases.filter(x => x.k === k);
+    if (!doTrecho.length) return f.texto.slice(0, 500);
+    return [...doTrecho].sort((a, b) => b.nota - a.nota).slice(0, 3).sort((a, b) => a.ordem - b.ordem).map(x => x.x).join(" ");
+  });
+  return {itens, contexto};
+}
+
+let nMsg = 0, gerando = false;
+const CTX = new Map();  // por resposta: pergunta, fontes e contexto condensado para a IA
 async function perguntar(q) {
   q = q.trim(); if (!q || ocupado || !extrator) return;
   ocupado = true; $("inicio")?.remove(); $("limpar").hidden = false;
@@ -403,67 +438,96 @@ async function perguntar(q) {
   const consulta = anterior && q.split(/\s+/).length <= 6 ? anterior + " " + q : q;
   const fontes = await buscarTrechos(consulta);
   if (!valendo()) return;
-  const blocoFontes = `<details class="fontes" ${motor ? "" : "open"}><summary>Trechos usados (${fontes.length})</summary>${fontes.map((f, k) => cartaoFonte(f, k + 1, id)).join("")}</details>`;
+  const blocoFontes = `<details class="fontes"><summary>Trechos usados (${fontes.length})</summary>${fontes.map((f, k) => cartaoFonte(f, k + 1, id)).join("")}</details>`;
   if (fontes.fraca) {
     const outra = "https://danimaciel.github.io/iagro-embrapa/#q=" + encodeURIComponent(q);
     resp.innerHTML = `<p>Não encontrei esse assunto nos documentos da Embrapa Territorial. Os trechos abaixo são os mais próximos, mas a relação com a pergunta é fraca.</p><p><a href="${outra}" target="_blank" rel="noopener">Buscar essa pergunta em toda a Embrapa ↗</a></p>`;
-    caixa.insertAdjacentHTML("beforeend", blocoFontes.replace("<details class=\"fontes\" open>", "<details class=\"fontes\">").replace("<details class=\"fontes\" >", "<details class=\"fontes\">"));
-  } else if (!motor) {
-    resp.innerHTML = `<p>Estes são os trechos mais relevantes que encontrei. Para receber uma resposta escrita a partir deles, ative a IA no topo da página.</p>`;
-    caixa.insertAdjacentHTML("beforeend", quadroRelacionados(fontes.relacionados) + blocoFontes);
+    caixa.insertAdjacentHTML("beforeend", blocoFontes);
   } else {
-    const nIA = modoLeve() ? 3 : fontes.length;
-    const contexto = fontes.slice(0, nIA).map((f, k) => `[${k + 1}] ${f.doc.t} (${NOME_TIPO[TIPOS[f.doc.k]]}, ${f.doc.a || "s.d."}${f.pagina ? ", p. " + f.pagina : ""})\n${f.texto}`).join("\n\n");
-    const msgs = [{role: "system", content: REGRAS}];
-    const ult = modoLeve() ? null : historico.at(-1);  // no modo leve, sem o contexto da pergunta anterior
-    if (ult) msgs.push({role: "user", content: ult.q}, {role: "assistant", content: ult.r});
-    msgs.push({role: "user", content: `TRECHOS:\n\n${contexto}\n\nPERGUNTA: ${q}\n\nResponda à pergunta usando os trechos acima e indique o número de cada trecho usado, como [1].`});
-    resp.innerHTML = `<p class="espera"><span class="cursor">Lendo os trechos e preparando a resposta${modoLeve() ? " (no celular pode levar até 1 minuto)" : ""}</span></p>`;
+    const rap = await respostaRapida(q, fontes);
+    if (!valendo()) return;
+    const lista = rap.itens.length
+      ? `<p class="rotulo">Resposta rápida · frases dos documentos mais próximas da sua pergunta</p><ul class="rapida">${rap.itens.map(f => `<li>${esc(f.x)} <a class="cit" href="#f-${id}-${f.k + 1}">${f.k + 1}</a></li>`).join("")}</ul>`
+      : `<p>Estes são os trechos mais relevantes que encontrei.</p>`;
+    resp.innerHTML = lista + `<button type="button" class="escreverIA" data-id="${id}">Escrever resposta com IA</button>
+      <div class="medida">A IA lê os trechos e escreve um texto citando as fontes. Roda no seu computador e pode levar até 1 minuto.</div>
+      ${caixaSel("r:" + id, null, "Selecionar esta resposta")}`;
+    const textoRapido = rap.itens.map(f => `${f.x} [${f.k + 1}]`).join(" ");
+    RESPOSTAS.set("r:" + id, {q, texto: textoRapido, fontes: fontes.map(f => f.doc.c)});
+    CTX.set(id, {q, fontes, contexto: rap.contexto});
     caixa.insertAdjacentHTML("beforeend", quadroRelacionados(fontes.relacionados) + blocoFontes);
-    let texto = "";
-    try {
-      const fluxo = await motor.chat.completions.create({messages: msgs, temperature: 0.2, max_tokens: modoLeve() ? 300 : 450, stream: true});
-      for await (const parte of fluxo) {
-        if (!valendo()) return;
-        texto += parte.choices[0]?.delta?.content || "";
-        resp.innerHTML = citacoes(texto, fontes.length) + `<span class="cursor"></span>`;
-      }
-      RESPOSTAS.set("r:" + id, {q, texto, fontes: fontes.map(f => f.doc.c)});
-      resp.innerHTML = citacoes(texto, fontes.length) + `<div class="aviso">Resposta gerada por IA no seu navegador a partir dos trechos abaixo. Confira as fontes.</div>` + caixaSel("r:" + id, null, "Selecionar esta resposta");
-      (caixa.querySelector(".rel") || caixa.querySelector(".fontes"))?.scrollIntoView({behavior: "smooth", block: "nearest"});
-      historico.push({q, r: texto});
-    } catch (e) {
-      if (!valendo()) return;
-      console.error(e);
-      const leve = document.querySelector('#modelo option[data-leve="1"]');
-      const sugestao = leve && !leve.selected ? ` <button type="button" class="tentarLeve" style="font:600 13px Inter,sans-serif;border:0;border-radius:8px;background:var(--amber);color:#1b1206;padding:6px 10px;cursor:pointer">Tentar com o modelo leve</button>` : "";
-      resp.innerHTML = `<p>A IA falhou ao responder (no celular, costuma ser falta de memória). Os trechos e projetos encontrados estão abaixo.${sugestao}</p>`;
-      caixa.querySelector("details").open = true;
-    }
   }
+  historico.push({q});
   if (valendo()) ocupado = false;
 }
+
+async function escreverComIA(id, botao) {
+  const c = CTX.get(id); if (!c || gerando) return;
+  const minha = rodada, caixa = $(`m-${id}`), resp = caixa.querySelector(".resp");
+  gerando = true; botao.disabled = true;
+  if (!motor) {
+    botao.textContent = "Preparando a IA…";
+    aoProgresso = p => { botao.textContent = `Preparando a IA: ${Math.round((p.progress || 0) * 100)}%`; };
+    const ok = await ativarIA(); aoProgresso = () => {};
+    if (!ok) { botao.textContent = "Não foi possível carregar a IA"; gerando = false; mostrarSugestaoLeve(resp); return; }
+  }
+  let alvo = resp.querySelector(".textoIA");
+  if (!alvo) { resp.insertAdjacentHTML("beforeend", `<div class="textoIA"></div>`); alvo = resp.querySelector(".textoIA"); }
+  alvo.innerHTML = `<p class="espera"><span class="cursor">A IA está lendo os trechos e escrevendo</span></p>`;
+  botao.textContent = "Escrevendo…";
+  const contexto = c.contexto.map((t, k) => { const f = c.fontes[k]; return `[${k + 1}] ${f.doc.t} (${NOME_TIPO[TIPOS[f.doc.k]]}, ${f.doc.a || "s.d."}${f.pagina ? ", p. " + f.pagina : ""})\n${t}`; }).join("\n\n");
+  const msgs = [{role: "system", content: REGRAS},
+    {role: "user", content: `TRECHOS:\n\n${contexto}\n\nPERGUNTA: ${c.q}\n\nResponda à pergunta usando os trechos acima e indique o número de cada trecho usado, como [1].`}];
+  let texto = ""; const t0 = performance.now();
+  try {
+    const fluxo = await motor.chat.completions.create({messages: msgs, temperature: 0.2, max_tokens: 250, stream: true});
+    for await (const parte of fluxo) {
+      if (minha !== rodada) { gerando = false; return; }
+      texto += parte.choices[0]?.delta?.content || "";
+      alvo.innerHTML = `<p class="rotulo">Resposta escrita pela IA</p>` + citacoes(texto, c.fontes.length) + `<span class="cursor"></span>`;
+    }
+    const seg = ((performance.now() - t0) / 1000).toFixed(0);
+    let stats = ""; try { stats = await motor.runtimeStatsText(); } catch (e) { /* sem estatística */ }
+    const lerTok = (stats.match(/prefill:\s*([\d.]+)/) || [])[1], escTok = (stats.match(/decoding:\s*([\d.]+)/) || [])[1];
+    const lenta = escTok && +escTok < 4 && !modoLeve();
+    alvo.innerHTML = `<p class="rotulo">Resposta escrita pela IA</p>` + citacoes(texto, c.fontes.length) +
+      `<div class="aviso">Gerada no seu navegador a partir dos trechos abaixo. Confira as fontes.</div>` +
+      `<div class="medida">${seg} s${lerTok ? ` · leitura ${Math.round(lerTok)} tokens/s · escrita ${(+escTok).toFixed(1)} tokens/s` : ""}${lenta ? " · neste aparelho a IA está lenta: experimente o modelo leve no topo da página" : ""}</div>`;
+    RESPOSTAS.set("r:" + id, {q: c.q, texto, fontes: c.fontes.map(f => f.doc.c)});
+    botao.remove();
+    caixa.querySelector(".medida:not(.textoIA .medida)")?.remove();
+  } catch (e) {
+    console.error(e);
+    alvo.innerHTML = `<p>A IA falhou ao responder (no celular, costuma ser falta de memória). A resposta rápida e os trechos continuam disponíveis.</p>`;
+    botao.disabled = false; botao.textContent = "Tentar de novo";
+    mostrarSugestaoLeve(alvo);
+  }
+  gerando = false;
+}
+function mostrarSugestaoLeve(onde) {
+  const leve = document.querySelector('#modelo option[data-leve="1"]');
+  if (leve && !leve.selected) onde.insertAdjacentHTML("beforeend", ` <button type="button" class="tentarLeve escreverIA">Usar o modelo leve</button>`);
+}
+document.addEventListener("click", async e => {
+  const b = e.target.closest(".escreverIA[data-id]"); if (b) { escreverComIA(+b.dataset.id, b); return; }
+  const l = e.target.closest(".tentarLeve"); if (!l) return;
+  try { await motor?.unload(); } catch (err) { /* segue */ }
+  motor = null; modeloCarregado = null;
+  document.querySelector('#modelo option[data-leve="1"]').selected = true;
+  l.textContent = "Modelo leve escolhido: clique em Escrever resposta com IA ou em Tentar de novo"; l.disabled = true;
+});
 
 const INICIO = $("conversa").innerHTML;
 function novaConversa() {
   rodada++;
-  if (ocupado && motor) { try { motor.interruptGenerate(); } catch (e) { /* já terminou */ } }
-  ocupado = false; historico.length = 0;
+  if (gerando && motor) { try { motor.interruptGenerate(); } catch (e) { /* já terminou */ } }
+  ocupado = false; gerando = false; historico.length = 0; CTX.clear();
   $("conversa").innerHTML = INICIO;
   $("exemplos").innerHTML = EXEMPLOS.map(x => `<button type="button">${esc(x)}</button>`).join("");
   $("limpar").hidden = true;
   window.scrollTo({top: 0, behavior: "smooth"}); $("q").focus();
 }
 $("limpar").addEventListener("click", novaConversa);
-document.addEventListener("click", async e => {
-  if (!e.target.closest(".tentarLeve")) return;
-  try { await motor?.unload(); } catch (err) { /* segue */ }
-  motor = null; document.querySelector('#modelo option[data-leve="1"]').selected = true;
-  $("ativar").disabled = false; $("modelo").disabled = false; $("ativar").textContent = "Ativar IA";
-  e.target.disabled = true; e.target.textContent = "Carregando o modelo leve…";
-  await ativarIA();
-  e.target.textContent = motor ? "Modelo leve pronto: pergunte de novo" : "Não foi possível";
-});
 
 $("form").addEventListener("submit", e => { e.preventDefault(); const q = $("q").value; $("q").value = ""; perguntar(q); });
 $("exemplos").innerHTML = EXEMPLOS.map(x => `<button type="button">${esc(x)}</button>`).join("");
@@ -483,7 +547,6 @@ async function iniciar() {
   env.allowLocalModels = false;
   extrator = await pipeline("feature-extraction", "Xenova/multilingual-e5-base", {dtype: "q8"});
   estado("estadoBusca", `Busca pronta: ${fmt(info.documentos)} documentos, ${fmt(info.n)} trechos.`, true);
-  reativarIA();
 }
 iniciar().catch(e => { console.error(e); estado("estadoBusca", "Erro ao carregar a base.", false); });
 </script>
