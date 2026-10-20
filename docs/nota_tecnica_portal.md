@@ -104,7 +104,7 @@ Na primeira visita, a busca baixa cerca de 110 MB (guardados no navegador para a
 - O assistente identifica-se como **inteligência artificial** e exibe o aviso: "Respostas geradas por inteligência artificial podem conter erros. Confira sempre a fonte original."
 - Responde **somente** com base nos documentos da unidade e sempre cita as fontes; quando não encontra, diz que não encontrou e encaminha ao SAC.
 - Não faz recomendações para propriedades específicas e não informa preços, prazos ou contatos.
-- Avaliação de qualidade com perguntas-teste da Embrapa Territorial: os resultados acompanham esta nota (anexo, após a rodada de avaliação).
+- Avaliação de qualidade com perguntas-teste da Embrapa Territorial: resultados no Anexo.
 
 ## 8. Hospedagem e manutenção
 
@@ -119,3 +119,18 @@ Na primeira visita, a busca baixa cerca de 110 MB (guardados no navegador para a
 3. Indicar a **página** onde o bloco será colocado (sugestão: "Pergunte à Embrapa Territorial", no menu da unidade).
 4. Validar com a **Comunicação** o nome ("iAgro · Pergunte à Embrapa Territorial"), os textos de boas-vindas e os avisos.
 5. Agendar um teste conjunto na página de homologação do portal, se houver.
+
+## Anexo — Avaliação com perguntas-teste (20/10/2026)
+
+Gabarito de 30 perguntas sobre a Embrapa Territorial (`avaliacao/gabarito_territorial.csv`): 23 com resposta no acervo (20 temáticas e 3 que a base responde só em parte) e 7 fora do tema. Modelo Gemma 2 2B (o recomendado na página), executado no processador pelo Ollama com as mesmas instruções e os mesmos 5 trechos que a página usa.
+
+| Medida | Resultado |
+|---|---|
+| A busca trouxe um documento esperado | 23 de 23 |
+| A IA citou um trecho de documento esperado | 20 de 23 |
+| A IA disse "não encontrei" sem motivo | 1 de 23 |
+| Fora do tema: a IA disse "não encontrei" | 5 de 7 |
+| Fora do tema, contando as regras da página (encaminhamento ao SAC) | 6 de 7 |
+| Tempo médio para redigir (processador; no navegador com WebGPU tende a ser menor) | 41 s |
+
+Nota: as instruções revisadas mantiveram os mesmos resultados da versão anterior (20/23, 1/23, 5/7), sem piora. Leitura das falhas: em uma pergunta a resposta estava correta, mas citou outro trecho do mesmo assunto; em uma pergunta sobre custo por hectare a IA interpretou mal um número — na página essa pergunta é encaminhada ao SAC pelas regras de atendimento e não chega à IA; um pedido de compra também é encaminhado ao SAC pelas regras. A resposta rápida (frases dos documentos com as fontes), disponível para todos os usuários, não depende da IA.

@@ -206,4 +206,6 @@ Mudanças em relação ao prompt atual:
 - Teste dos fluxos (busca, sem a IA de redação): saudação, atendimento (2 variações), fora do escopo, recomendação individual e pergunta sobre pessoas seguiram o fluxo previsto.
 - Teste das 12 perguntas sugeridas: todas encontraram documentos (nenhuma "não encontrei"). Em duas, a primeira fonte é mais genérica que a solução esperada (SITE Caatinga; pastagens por satélite) — a revisar na avaliação.
 - Correção: perguntas sugeridas clicadas não são mais tratadas como continuação da pergunta anterior (antes, perguntas de até 6 palavras eram buscadas junto com a anterior).
-- Pendente: avaliação das respostas da IA com o gabarito (Ollama, ~1 h de processamento) e testes no celular e no balão.
+- Avaliação com o gabarito (Gemma 2 2B, 20/10/2026): citou o documento esperado em 20/23, 'não encontrei' indevido 1/23, fora do tema 5/7 pela IA e 6/7 com as regras da página — iguais à versão anterior das instruções. Detalhes na nota técnica (anexo).
+- Observação: as regras de atendimento encaminham ao SAC perguntas de custo ("quanto custa…"), inclusive as de pesquisa; isso evita números mal interpretados, mas pode ser revisto.
+- Pendente: testes no celular.
