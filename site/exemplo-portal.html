@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulação · iAgro numa página de unidade</title>
+<style>
+  :root{--ink:#1d2a22;--muted:#5d6b62;--line:#dfe5e0;--verde:#1f6b45}
+  *{box-sizing:border-box}
+  body{margin:0;font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:#fff}
+  .aviso{background:#fff4d6;border-bottom:1px solid #f0d38a;padding:8px 16px;font-size:14px;text-align:center}
+  .topo{background:#f2f5f3;border-bottom:1px solid var(--line)}
+  .topo .wrap,.menu .wrap,main,.rod .wrap{max-width:1100px;margin:0 auto;padding:0 16px}
+  .topo .wrap{display:flex;align-items:center;gap:12px;height:64px}
+  .logo{width:44px;height:44px;border-radius:8px;background:var(--line);display:grid;place-items:center;font-size:11px;color:var(--muted)}
+  .menu{background:var(--verde)} .menu .wrap{display:flex;gap:22px;height:44px;align-items:center}
+  .menu span{color:#fff;font-size:14px;opacity:.9}
+  main{padding-top:24px;padding-bottom:40px}
+  h1{font-size:28px;margin:0 0 6px} .lead{color:var(--muted);margin:0 0 18px;max-width:70ch}
+  .bloco{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .bloco iframe{display:block;width:100%;height:760px;border:0}
+  .rotulo{font-size:13px;color:var(--muted);margin:22px 0 8px}
+  .rod{margin-top:28px;background:#f2f5f3;border-top:1px solid var(--line)} .rod .wrap{padding:18px 16px;font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="aviso">Simulação para a equipe do portal — não é o portal oficial. Mostra as duas formas de incorporar o iAgro.</div>
+<div class="topo"><div class="wrap"><div class="logo">logo</div><b>Unidade de pesquisa (simulação)</b></div></div>
+<nav class="menu"><div class="wrap"><span>Início</span><span>Quem somos</span><span>Pesquisa</span><span>Publicações</span><span>Pergunte à unidade</span></div></nav>
+<main>
+  <h1>Pergunte à Embrapa Territorial</h1>
+  <p class="lead">Faça uma pergunta sobre o que a unidade produziu e produz — publicações, soluções tecnológicas e projetos. As respostas citam as fontes.</p>
+
+  <p class="rotulo"><b>Forma A</b> — bloco nesta página (iframe):</p>
+  <div class="bloco">
+    <iframe src="./?embed=1" title="Pergunte à Embrapa Territorial — iAgro" loading="lazy"
+            allow="clipboard-write"></iframe>
+  </div>
+
+  <p class="rotulo"><b>Forma B</b> — balão no canto da tela (clique no botão verde, embaixo à direita). Aparece em todas
+    as páginas quando o script é incluído no modelo do site.</p>
+</main>
+<footer class="rod"><div class="wrap">Rodapé do portal (simulação).</div></footer>
+
+<script src="./balao.js" defer></script>
+</body>
+</html>
