@@ -563,9 +563,12 @@ async function perguntar(q, nova = false) {   // nova: sugestão clicada, não �
     resp.innerHTML = respostaFixa(tipo);
     ocupado = false; return;
   }
-  // pergunta curta de continuação ("e no Cerrado?"): busca junto com a anterior
+  // continuação ("e no Cerrado?", "e para milho?", "mas onde?"): busca junto com a anterior.
+  // Só quando começa com conectivo de continuação ou tem até 3 palavras — pergunta curta mas completa
+  // ("como escoar produção de soja?") é assunto novo.
   const anterior = historico.at(-1)?.q;
-  const consulta = !nova && anterior && q.split(/\s+/).length <= 6 ? anterior + " " + q : q;
+  const continua = /^(e|mas|tamb[eé]m|ent[aã]o)\s/i.test(q) || q.split(/\s+/).length <= 3;
+  const consulta = !nova && anterior && continua ? anterior + " " + q : q;
   const fontes = await buscarTrechos(consulta);
   if (!valendo()) return;
   const blocoFontes = `<details class="fontes"><summary>Trechos usados (${fontes.length})</summary>${fontes.map((f, k) => cartaoFonte(f, k + 1, id)).join("")}</details>`;
