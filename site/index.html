@@ -103,6 +103,7 @@ body.com-selecao main.wrap{padding-bottom:250px}
 .etq{display:inline-block;font-size:11.5px;border-radius:99px;padding:1px 7px;background:var(--bg);border:1px solid var(--line);color:var(--ink);margin:0 3px 2px 0;cursor:pointer}
 .etq.prod{border-color:#3f9a5c66} .etq.uf{border-color:#2f6f9f55} .etq.bio{border-color:#c8892a66}
 .onde{font-size:13px;color:var(--muted);margin:4px 0 10px}
+.onde .mapa{margin-left:6px;white-space:nowrap;font-weight:500}
 .rotulo{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px}
 .rapida{margin:0 0 10px;padding-left:18px}
 .rapida li{margin:0 0 6px}
@@ -342,14 +343,20 @@ function etiquetasDoc(d) {
   const bi = (d.bi || []).slice(0, 2).map(b => `<span class="etq bio">${esc(b)}</span>`);
   return [...pr, ...uf, ...bi].join("");
 }
-function ondeEoQue(fontes) {
+// link para o mapa do iAgro Embrapa: mesma pergunta, só a Embrapa Territorial e os filtros escolhidos aqui
+function linkMapa(q) {
+  const h = new URLSearchParams({q, u: "Embrapa Territorial"});
+  if (fP) h.set("p", fP); if (fE) h.set("e", fE);
+  return `<a class="mapa" href="https://danimaciel.github.io/iagro-embrapa/#${h}" target="_blank" rel="noopener" title="Abre o iAgro Embrapa com esta pergunta, filtrado para a Embrapa Territorial, com mapa por estado">Ver no mapa ↗</a>`;
+}
+function ondeEoQue(fontes, q) {
   const cp = new Map(), cu = new Map();
   fontes.forEach(f => { (f.doc.pp || []).forEach(x => cp.set(x, (cp.get(x) || 0) + 1)); (f.doc.uf || []).forEach(x => cu.set(x, (cu.get(x) || 0) + 1)); });
   const ord = m => [...m.entries()].sort((a, b) => b[1] - a[1]).map(([k]) => k);
   const p = ord(cp).slice(0, 5), u = ord(cu).slice(0, 6);
-  if (!p.length && !u.length) return "";
+  if (!p.length && !u.length) return `<div class="onde">${linkMapa(q)}</div>`;
   return `<div class="onde">${p.length ? `<b>Produtos:</b> ${p.map(x => `<span class="etq prod" data-fp="${esc(x)}">${esc(nomeProd(x))}</span>`).join("")}` : ""}
-    ${u.length ? ` <b>Onde:</b> ${u.map(x => `<span class="etq uf" data-fe="${x}">${x}</span>`).join("")}` : ""}</div>`;
+    ${u.length ? ` <b>Onde:</b> ${u.map(x => `<span class="etq uf" data-fe="${x}">${x}</span>`).join("")}` : ""} ${linkMapa(q)}</div>`;
 }
 function aplicarFiltroC(qual, valor) {
   if (qual === "p") { fP = valor; $("fProduto").value = valor; } else { fE = valor; $("fEstado").value = valor; }
@@ -503,7 +510,7 @@ async function perguntar(q) {
     const lista = rap.itens.length
       ? `<p class="rotulo">Resposta rápida · frases dos documentos mais próximas da sua pergunta</p><ul class="rapida">${rap.itens.map(f => `<li>${esc(f.x)} <a class="cit" href="#f-${id}-${f.k + 1}">${f.k + 1}</a></li>`).join("")}</ul>`
       : `<p>Estes são os trechos mais relevantes que encontrei.</p>`;
-    resp.innerHTML = lista + ondeEoQue(fontes) + `<button type="button" class="escreverIA" data-id="${id}">Escrever resposta com IA</button>
+    resp.innerHTML = lista + ondeEoQue(fontes, consulta) + `<button type="button" class="escreverIA" data-id="${id}">Escrever resposta com IA</button>
       <div class="medida">A IA lê os trechos e escreve um texto citando as fontes. Roda no seu computador e pode levar até 1 minuto.</div>
       ${caixaSel("r:" + id, null, "Selecionar esta resposta")}`;
     const textoRapido = rap.itens.map(f => `${f.x} [${f.k + 1}]`).join(" ");
