@@ -13,7 +13,9 @@ no próprio navegador, escreve a resposta citando as fontes [1], [2]...
 > conter erros: confira sempre a publicação original.
 
 - **Custo zero, sem servidor.** Busca (multilingual-e5) e modelo de linguagem (Qwen 2.5 ou Gemma 2, via
-  [WebLLM](https://github.com/mlc-ai/web-llm)) rodam no navegador de quem usa; nenhuma pergunta sai do computador.
+  [WebLLM](https://github.com/mlc-ai/web-llm)) rodam no navegador de quem usa. A página do GitHub pode guardar
+  o texto das perguntas, sem identificar quem perguntou e com opção de recusa; no modo incorporado ao portal,
+  nada é enviado ([docs/REGISTRO.md](docs/REGISTRO.md)).
   O modelo de linguagem é opcional e precisa de navegador com WebGPU (Chrome ou Edge atualizados, no computador).
 - **Texto completo só das publicações técnicas da Embrapa** (PDF na Infoteca-e: folhetos, livros, folders, mapas,
   relatórios). Artigos de periódicos, trabalhos de eventos, teses e capítulos em livros de outras editoras

@@ -209,3 +209,7 @@ Mudanças em relação ao prompt atual:
 - Avaliação com o gabarito (Gemma 2 2B, 20/10/2026): citou o documento esperado em 20/23, 'não encontrei' indevido 1/23, fora do tema 5/7 pela IA e 6/7 com as regras da página — iguais à versão anterior das instruções. Detalhes na nota técnica (anexo).
 - Observação: as regras de atendimento encaminham ao SAC perguntas de custo ("quanto custa…"), inclusive as de pesquisa; isso evita números mal interpretados, mas pode ser revisto.
 - Pendente: testes no celular.
+
+## 12. Registro das perguntas (23/10/2026)
+
+- Só na página pública do GitHub; nunca no modo incorporado ao portal. Aviso sob a caixa de pergunta, botão "Não registrar as minhas", botões "Ajudou / Não ajudou" em cada resposta e texto de privacidade do Sobre ajustado automaticamente quando o registro está ligado. Detalhes, campos e instalação em `docs/REGISTRO.md`.

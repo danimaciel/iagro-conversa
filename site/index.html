@@ -127,6 +127,10 @@ body.com-selecao main.wrap{padding-bottom:250px}
 .escreverIA:disabled{opacity:.7;cursor:default}
 .textoIA{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
 .medida{font-size:12px;color:var(--muted);margin-top:6px}
+.avaliar{font-size:13px;color:var(--muted);margin-top:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.avaliar button{font:500 13px Inter,sans-serif;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:3px 10px;cursor:pointer}
+.avaliar button:hover{border-color:var(--green-500)}
+#avisoReg button{all:unset;cursor:pointer;text-decoration:underline}
 .cursor::after{content:"▍";animation:pisca 1s infinite;color:var(--green-500)}
 @keyframes pisca{50%{opacity:0}}
 .entrada{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(transparent, var(--bg) 30%);padding:24px 0 14px}
@@ -213,7 +217,7 @@ dialog button{font:600 14px Inter,sans-serif;border:0;border-radius:8px;backgrou
       </div>
     </div>
     <form id="form"><input id="q" autocomplete="off" placeholder="Escreva sua pergunta…" aria-label="Sua pergunta"><button type="button" id="limpar" class="sec" hidden title="Apaga a conversa e começa de novo (a IA continua carregada)">Nova conversa</button><button>Enviar</button></form>
-    <small>Respostas geradas por inteligência artificial podem conter erros. Confira sempre a fonte original.</small>
+    <small>Respostas geradas por inteligência artificial podem conter erros. Confira sempre a fonte original.<span id="avisoReg" hidden> As perguntas são guardadas sem identificar quem perguntou, para melhorar o assistente. <button type="button" id="regDesligar">Não registrar as minhas</button></span></small>
   </div>
 </div>
 
@@ -221,7 +225,7 @@ dialog button{font:600 14px Inter,sans-serif;border:0;border-radius:8px;backgrou
   <h2 id="sobreTitulo">Sobre o iAgro</h2>
   <p>O iAgro é um projeto experimental, feito com dados públicos da Embrapa, que busca apoiar o desenvolvimento da agricultura brasileira facilitando o acesso às tecnologias e aos conhecimentos produzidos pela pesquisa agropecuária pública.</p>
   <p>Não é um serviço oficial da Embrapa. Respostas geradas por inteligência artificial podem conter erros: confira sempre a publicação original.</p>
-  <p><b>Privacidade:</b> nenhuma pergunta sai do seu computador — a busca e a IA rodam no seu navegador, e nada é guardado.</p>
+  <p id="sobrePriv"><b>Privacidade:</b> nenhuma pergunta sai do seu computador — a busca e a IA rodam no seu navegador, e nada é guardado.</p>
   <p>Para atendimento, serviços ou dúvidas que o assistente não responde: <a href="https://www.embrapa.br/fale-conosco/sac" target="_blank" rel="noopener">SAC da Embrapa ↗</a>.</p>
   <p style="font-size:14px;color:var(--muted)" id="sobreDados"></p>
   <p style="font-size:14px;color:var(--muted)">Também: <a href="https://danimaciel.github.io/iagro-embrapa/">busca em toda a Embrapa</a> · <a href="https://github.com/danimaciel/iagro-conversa">código aberto</a></p>
@@ -268,6 +272,47 @@ const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&
 const fmt = n => n.toLocaleString("pt-BR");
 
 let INFO, DOCS, TR, BITS, N, extrator = null, motor = null, ocupado = false;
+
+/* ---------- registro mínimo das perguntas (docs/REGISTRO.md)
+   Só na página pública do GitHub; nunca no modo incorporado ao portal (?embed), como diz a nota técnica.
+   Sem IP, cookie ou identificador de pessoa: cada pergunta recebe um código aleatório só para ligar
+   a pergunta ao uso da IA e à avaliação "ajudou / não ajudou". E-mail, CPF e telefone são apagados antes do envio. */
+const REGISTRO_URL = "";   // endereço do Apps Script ("…/exec"); vazio = registro desligado
+const EMBED = document.documentElement.classList.contains("embed");
+let semRegistro = false;
+try { semRegistro = localStorage.getItem("iagro-sem-registro") === "1"; } catch (e) { /* navegador sem armazenamento */ }
+const registroAtivo = () => !!REGISTRO_URL && !EMBED && !semRegistro;
+const limparPessoal = t => String(t || "")
+  .replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, "[e-mail]")
+  .replace(/\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/g, "[cpf]")
+  .replace(/\(?\d{2}\)?\s?9?\d{4}-\d{4}/g, "[telefone]")
+  .replace(/\d{8,}/g, "[número]").slice(0, 500);
+const novoPid = () => Math.random().toString(36).slice(2, 10);
+function registrar(ev, dados) {
+  if (!registroAtivo()) return;
+  try {
+    fetch(REGISTRO_URL, {method: "POST", mode: "no-cors", keepalive: true,
+      headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify({ev, v: 1, ...dados})}).catch(() => {});
+  } catch (e) { /* o registro nunca atrapalha a conversa */ }
+}
+const botoesAvaliar = pid => registroAtivo() ? `<div class="avaliar" data-pid="${pid}">Esta resposta ajudou? <button type="button" data-util="1">Ajudou</button><button type="button" data-util="0">Não ajudou</button></div>` : "";
+function prepararRegistro() {
+  if (!REGISTRO_URL || EMBED) return;
+  $("sobrePriv").innerHTML = semRegistro
+    ? "<b>Privacidade:</b> você pediu para não registrar suas perguntas; nada é enviado. A busca e a IA rodam no seu navegador."
+    : "<b>Privacidade:</b> a busca e a IA rodam no seu navegador. Para melhorar o assistente, guardamos o texto das perguntas (sem e-mail, CPF ou telefone), os filtros usados, quais documentos vieram como fonte, o uso da IA e a avaliação “ajudou / não ajudou”. Não guardamos endereço IP, cookies nem nada que identifique quem perguntou. Os registros ficam restritos à equipe do projeto por até 12 meses; só resumos agregados podem ser divulgados.";
+  $("avisoReg").hidden = semRegistro;
+}
+document.addEventListener("click", e => {
+  if (e.target.id === "regDesligar") {
+    semRegistro = true; try { localStorage.setItem("iagro-sem-registro", "1"); } catch (err) { /* vale só nesta visita */ }
+    document.querySelectorAll(".avaliar").forEach(x => x.remove()); prepararRegistro(); return;
+  }
+  const b = e.target.closest(".avaliar button"); if (!b) return;
+  const caixa = b.closest(".avaliar");
+  registrar("avaliacao", {pid: caixa.dataset.pid, util: b.dataset.util === "1"});
+  caixa.textContent = "Obrigado pela avaliação.";
+});
 const blocos = new Map(), historico = [];
 let rodada = 0;  // muda a cada "Nova conversa": respostas de rodadas antigas são descartadas
 
@@ -558,9 +603,10 @@ async function perguntar(q, nova = false) {   // nova: sugestão clicada, não �
   conv.insertAdjacentHTML("beforeend", `<div class="msg eu"><div>${esc(q)}</div></div><div class="msg ia" id="m-${id}"><div class="resp"><span class="cursor">Procurando nos documentos</span></div></div>`);
   const caixa = $(`m-${id}`), resp = caixa.querySelector(".resp");
   caixa.scrollIntoView({behavior: "smooth", block: "start"});
-  const tipo = fluxo(q);
+  const tipo = fluxo(q), pid = novoPid();
   if (["saudacao", "atendimento", "neutro"].includes(tipo)) {   // não busca: resposta fixa
     resp.innerHTML = respostaFixa(tipo);
+    registrar("pergunta", {pid, q: limparPessoal(q), tipo});
     ocupado = false; return;
   }
   // continuação ("e no Cerrado?", "e para milho?", "mas onde?"): busca junto com a anterior.
@@ -569,14 +615,17 @@ async function perguntar(q, nova = false) {   // nova: sugestão clicada, não �
   const anterior = historico.at(-1)?.q;
   const continua = /^(e|mas|tamb[eé]m|ent[aã]o)\s/i.test(q) || q.split(/\s+/).length <= 3;
   const consulta = !nova && anterior && continua ? anterior + " " + q : q;
-  const fontes = await buscarTrechos(consulta);
+  const t0 = performance.now(), fontes = await buscarTrechos(consulta);
   if (!valendo()) return;
+  registrar("pergunta", {pid, q: limparPessoal(q), consulta: consulta !== q ? limparPessoal(consulta) : "", tipo,
+    p: fP, e: fE, fraca: !!fontes.fraca, semFiltro: !!fontes.semFiltro, melhor: fontes[0]?.nota?.toFixed(3) ?? "",
+    fontes: fontes.map(f => f.doc.c), ms: Math.round(performance.now() - t0)});
   const blocoFontes = `<details class="fontes"><summary>Trechos usados (${fontes.length})</summary>${fontes.map((f, k) => cartaoFonte(f, k + 1, id)).join("")}</details>`;
   if (fontes.semFiltro) {
     resp.innerHTML = `<p>Nenhum documento atende aos filtros escolhidos (${esc([fP && nomeProd(fP), fE].filter(Boolean).join(" · "))}). Tire os filtros no topo da página e pergunte de novo.</p>`;
   } else if (fontes.fraca) {
     const outra = "https://danimaciel.github.io/iagro-embrapa/#q=" + encodeURIComponent(q);
-    resp.innerHTML = `<p>Não encontrei esse assunto nos documentos da Embrapa Territorial. Você pode <a href="${outra}" target="_blank" rel="noopener">buscar essa pergunta em toda a Embrapa ↗</a> ou falar com o ${LINK_SAC}, que encaminha sua dúvida à equipe certa.</p><p class="sac">Os trechos abaixo são os mais próximos, mas a relação com a pergunta é fraca.</p>`;
+    resp.innerHTML = `<p>Não encontrei esse assunto nos documentos da Embrapa Territorial. Você pode <a href="${outra}" target="_blank" rel="noopener">buscar essa pergunta em toda a Embrapa ↗</a> ou falar com o ${LINK_SAC}, que encaminha sua dúvida à equipe certa.</p><p class="sac">Os trechos abaixo são os mais próximos, mas a relação com a pergunta é fraca.</p>${botoesAvaliar(pid)}`;
     caixa.insertAdjacentHTML("beforeend", blocoFontes);
   } else {
     const rap = await respostaRapida(q, fontes);
@@ -591,10 +640,10 @@ async function perguntar(q, nova = false) {   // nova: sugestão clicada, não �
       : `<p class="sac">Não era isso? Reformule a pergunta ou fale com o ${LINK_SAC}.</p>`;
     resp.innerHTML = notaAntes + lista + ondeEoQue(fontes, consulta) + `<button type="button" class="escreverIA" data-id="${id}">Escrever resposta com IA</button>
       <div class="medida">A IA lê os trechos e escreve um texto citando as fontes. Roda no seu computador e pode levar até 1 minuto.</div>
-      ${notaDepois}${caixaSel("r:" + id, null, "Selecionar esta resposta")}`;
+      ${notaDepois}${botoesAvaliar(pid)}${caixaSel("r:" + id, null, "Selecionar esta resposta")}`;
     const textoRapido = rap.itens.map(f => `${f.x} [${f.k + 1}]`).join(" ");
     RESPOSTAS.set("r:" + id, {q, texto: textoRapido, fontes: fontes.map(f => f.doc.c)});
-    CTX.set(id, {q, fontes, contexto: rap.contexto});
+    CTX.set(id, {q, fontes, contexto: rap.contexto, pid});
     caixa.insertAdjacentHTML("beforeend", quadroRelacionados(fontes.relacionados) + blocoFontes);
   }
   historico.push({q});
@@ -609,7 +658,7 @@ async function escreverComIA(id, botao) {
     botao.textContent = "Preparando a IA…";
     aoProgresso = p => { botao.textContent = `Preparando a IA: ${Math.round((p.progress || 0) * 100)}%`; };
     const ok = await ativarIA(); aoProgresso = () => {};
-    if (!ok) { botao.textContent = "Não foi possível carregar a IA"; gerando = false; mostrarSugestaoLeve(resp); return; }
+    if (!ok) { botao.textContent = "Não foi possível carregar a IA"; gerando = false; registrar("ia", {pid: c.pid, modelo: $("modelo").value, ok: false, erro: "carregar"}); mostrarSugestaoLeve(resp); return; }
   }
   let alvo = resp.querySelector(".textoIA");
   if (!alvo) { resp.insertAdjacentHTML("beforeend", `<div class="textoIA"></div>`); alvo = resp.querySelector(".textoIA"); }
@@ -634,11 +683,13 @@ async function escreverComIA(id, botao) {
       `<div class="aviso">Gerada no seu navegador a partir dos trechos abaixo. Confira as fontes.</div>` +
       `<div class="medida">${seg} s${lerTok ? ` · leitura ${Math.round(lerTok)} tokens/s · escrita ${(+escTok).toFixed(1)} tokens/s` : ""}${lenta ? " · neste aparelho a IA está lenta: experimente o modelo leve no topo da página" : ""}</div>`;
     RESPOSTAS.set("r:" + id, {q: c.q, texto, fontes: c.fontes.map(f => f.doc.c)});
+    registrar("ia", {pid: c.pid, modelo: $("modelo").value, seg: +seg, ok: true, tok: escTok ? (+escTok).toFixed(1) : ""});
     botao.remove();
     caixa.querySelector(".medida:not(.textoIA .medida)")?.remove();
   } catch (e) {
     console.error(e);
     alvo.innerHTML = `<p>Não consegui escrever o texto agora. A resposta rápida e as fontes continuam abaixo.</p>`;
+    registrar("ia", {pid: c.pid, modelo: $("modelo").value, ok: false, erro: String(e?.message || e).slice(0, 120)});
     botao.disabled = false; botao.textContent = "Tentar de novo";
     mostrarSugestaoLeve(alvo);
   }
@@ -680,6 +731,7 @@ async function iniciar() {
     fetch("dados/trechos.json").then(r => r.json()), fetch("dados/bits.bin").then(r => r.arrayBuffer()),
   ]);
   REGRAS = await fetch("prompt.txt").then(r => r.text());
+  prepararRegistro();
   INFO = info; DOCS = docs; TR = tr; BITS = new Uint8Array(bits); N = info.n;
   PT = [...TR.d.keys()].filter(i => DOCS[TR.d[i]].k > 0);
   if (INFO.produtos && Object.keys(INFO.produtos).length) {

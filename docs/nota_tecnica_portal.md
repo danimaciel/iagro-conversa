@@ -98,6 +98,7 @@ Na primeira visita, a busca baixa cerca de 110 MB (guardados no navegador para a
 - A página não usa cookies, armazenamento de sessão nem ferramentas de análise de acesso.
 - Como qualquer hospedagem, o GitHub Pages (e os serviços de onde a página baixa bibliotecas e o modelo de busca) registra acessos técnicos — por exemplo, o endereço IP de quem carrega a página —, conforme suas próprias políticas. As perguntas não fazem parte desses acessos.
 - O texto "Sobre" do assistente informa isso ao usuário.
+- **Página de demonstração no GitHub** (https://danimaciel.github.io/iagro-conversa/, fora do portal): desde 23/10/2026 pode guardar, com aviso e opção de recusa na própria página, o texto das perguntas (sem e-mail, CPF ou telefone), os filtros, os documentos-fonte, o uso da IA e a avaliação "ajudou / não ajudou", sem IP, cookies ou identificação de quem perguntou (`docs/REGISTRO.md`). **No modo incorporado ao portal (`?embed`) esse registro fica sempre desligado**: o que está acima continua valendo para o portal.
 
 ## 7. Transparência e limites
 
